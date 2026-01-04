@@ -17,226 +17,103 @@ import type {
 import { AppContext } from "./createAppContext";
 import { useAuth } from "../hooks/useAuth";
 import {
-  transactionsAPI,
-  expensesAPI,
-  interestAPI,
-  earningsAPI,
-} from "../services/api";
+  saveTransactions as saveTransactionsToFirestore,
+  loadTransactions as loadTransactionsFromFirestore,
+  saveExpenses as saveExpensesToFirestore,
+  loadExpenses as loadExpensesFromFirestore,
+  saveInterestTransactions as saveInterestToFirestore,
+  loadInterestTransactions as loadInterestFromFirestore,
+  saveEarnings as saveEarningsToFirestore,
+  loadEarnings as loadEarningsFromFirestore,
+  saveOtherBalances as saveOtherBalancesToFirestore,
+  loadOtherBalances as loadOtherBalancesFromFirestore,
+} from "../services/firestore";
 
-const getUserStorageKey = (baseKey: string, userEmail?: string | null) => {
-  if (!userEmail) return baseKey;
-  // Create a user-specific storage key
-  return `${baseKey}_${userEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
-};
-
-const loadFromStorage = (userEmail?: string | null): Transaction[] => {
+// Firestore-based data persistence
+const saveToStorage = async (transactions: Transaction[]) => {
   try {
-    const storageKey = getUserStorageKey("fintrack_transactions", userEmail);
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      return parsed.map((t: Transaction) => ({
-        ...t,
-        date: new Date(t.date),
-      }));
-    }
+    await saveTransactionsToFirestore(transactions);
   } catch (error) {
-    console.error("Error loading from storage:", error);
+    console.error("Error saving transactions:", error);
   }
-  return [];
 };
 
-const saveToStorage = (
-  transactions: Transaction[],
-  userEmail?: string | null
+const loadFromStorage = async (): Promise<Transaction[]> => {
+  try {
+    return await loadTransactionsFromFirestore();
+  } catch (error) {
+    console.error("Error loading transactions:", error);
+    return [];
+  }
+};
+
+const saveExpensesToStorage = async (expenses: Expense[]) => {
+  try {
+    await saveExpensesToFirestore(expenses);
+  } catch (error) {
+    console.error("Error saving expenses:", error);
+  }
+};
+
+const loadExpensesFromStorage = async (): Promise<Expense[]> => {
+  try {
+    return await loadExpensesFromFirestore();
+  } catch (error) {
+    console.error("Error loading expenses:", error);
+    return [];
+  }
+};
+
+const loadInterestFromStorage = async (): Promise<InterestTransaction[]> => {
+  try {
+    return await loadInterestFromFirestore();
+  } catch (error) {
+    console.error("Error loading interest:", error);
+    return [];
+  }
+};
+
+const saveInterestToStorage = async (
+  interestTransactions: InterestTransaction[]
 ) => {
   try {
-    const storageKey = getUserStorageKey("fintrack_transactions", userEmail);
-    localStorage.setItem(storageKey, JSON.stringify(transactions));
+    await saveInterestToFirestore(interestTransactions);
   } catch (error) {
-    console.error("Error saving to storage:", error);
+    console.error("Error saving interest:", error);
   }
 };
 
-const loadExpensesFromStorage = (userEmail?: string | null): Expense[] => {
+const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
   try {
-    const storageKey = getUserStorageKey("fintrack_expenses", userEmail);
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      return parsed.map((e: Expense) => ({
-        ...e,
-        date: new Date(e.date),
-      }));
-    }
+    return await loadEarningsFromFirestore();
   } catch (error) {
-    console.error("Error loading expenses from storage:", error);
-  }
-  return [];
-};
-
-const saveExpensesToStorage = (
-  expenses: Expense[],
-  userEmail?: string | null
-) => {
-  try {
-    const storageKey = getUserStorageKey("fintrack_expenses", userEmail);
-    localStorage.setItem(storageKey, JSON.stringify(expenses));
-  } catch (error) {
-    console.error("Error saving expenses to storage:", error);
+    console.error("Error loading earnings:", error);
+    return [];
   }
 };
 
-const loadInterestFromStorage = (
-  userEmail?: string | null
-): InterestTransaction[] => {
+const saveEarningsToStorage = async (earnings: PersonalEarning[]) => {
   try {
-    const storageKey = getUserStorageKey("fintrack_interest", userEmail);
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      return parsed.map((i: InterestTransaction) => ({
-        ...i,
-        date: new Date(i.date),
-      }));
-    }
+    await saveEarningsToFirestore(earnings);
   } catch (error) {
-    console.error("Error loading interest from storage:", error);
-  }
-  return [];
-};
-
-const saveInterestToStorage = (
-  interestTransactions: InterestTransaction[],
-  userEmail?: string | null
-) => {
-  try {
-    const storageKey = getUserStorageKey("fintrack_interest", userEmail);
-    localStorage.setItem(storageKey, JSON.stringify(interestTransactions));
-  } catch (error) {
-    console.error("Error saving interest to storage:", error);
+    console.error("Error saving earnings:", error);
   }
 };
 
-const loadEarningsFromStorage = (
-  userEmail?: string | null
-): PersonalEarning[] => {
+const loadOtherBalancesFromStorage = async (): Promise<OtherBalance[]> => {
   try {
-    const storageKey = getUserStorageKey("fintrack_earnings", userEmail);
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      return parsed.map((e: PersonalEarning) => ({
-        ...e,
-        date: new Date(e.date),
-      }));
-    }
+    return await loadOtherBalancesFromFirestore();
   } catch (error) {
-    console.error("Error loading earnings from storage:", error);
-  }
-  return [];
-};
-
-const saveEarningsToStorage = (
-  earnings: PersonalEarning[],
-  userEmail?: string | null
-) => {
-  try {
-    const storageKey = getUserStorageKey("fintrack_earnings", userEmail);
-    localStorage.setItem(storageKey, JSON.stringify(earnings));
-  } catch (error) {
-    console.error("Error saving earnings to storage:", error);
+    console.error("Error loading other balances:", error);
+    return [];
   }
 };
 
-const loadOtherBalancesFromStorage = (
-  userEmail?: string | null
-): OtherBalance[] => {
+const saveOtherBalancesToStorage = async (balances: OtherBalance[]) => {
   try {
-    const storageKey = getUserStorageKey("fintrack_other_balances", userEmail);
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      return parsed.map((b: OtherBalance) => ({
-        ...b,
-        updatedAt: new Date(b.updatedAt),
-        transactions: (b.transactions || []).map((t: OtherTransaction) => ({
-          ...t,
-          date: new Date(t.date),
-        })),
-      }));
-    }
+    await saveOtherBalancesToFirestore(balances);
   } catch (error) {
-    console.error("Error loading other balances from storage:", error);
-  }
-  return [];
-};
-
-const saveOtherBalancesToStorage = (
-  balances: OtherBalance[],
-  userEmail?: string | null
-) => {
-  try {
-    const storageKey = getUserStorageKey("fintrack_other_balances", userEmail);
-    localStorage.setItem(storageKey, JSON.stringify(balances));
-  } catch (error) {
-    console.error("Error saving other balances to storage:", error);
-  }
-};
-
-// Migration function to move old data to user-specific keys
-const migrateOldDataToUserSpecific = (userEmail: string) => {
-  const migrationKey = `fintrack_migrated_${userEmail.replace(
-    /[^a-zA-Z0-9]/g,
-    "_"
-  )}`;
-
-  // Check if migration already done for this user
-  if (localStorage.getItem(migrationKey)) {
-    return;
-  }
-
-  try {
-    // Migrate transactions
-    const oldTransactions = localStorage.getItem("fintrack_transactions");
-    if (oldTransactions) {
-      const newKey = getUserStorageKey("fintrack_transactions", userEmail);
-      if (!localStorage.getItem(newKey)) {
-        localStorage.setItem(newKey, oldTransactions);
-      }
-    }
-
-    // Migrate expenses
-    const oldExpenses = localStorage.getItem("fintrack_expenses");
-    if (oldExpenses) {
-      const newKey = getUserStorageKey("fintrack_expenses", userEmail);
-      if (!localStorage.getItem(newKey)) {
-        localStorage.setItem(newKey, oldExpenses);
-      }
-    }
-
-    // Migrate interest
-    const oldInterest = localStorage.getItem("fintrack_interest");
-    if (oldInterest) {
-      const newKey = getUserStorageKey("fintrack_interest", userEmail);
-      if (!localStorage.getItem(newKey)) {
-        localStorage.setItem(newKey, oldInterest);
-      }
-    }
-
-    // Migrate earnings
-    const oldEarnings = localStorage.getItem("fintrack_earnings");
-    if (oldEarnings) {
-      const newKey = getUserStorageKey("fintrack_earnings", userEmail);
-      if (!localStorage.getItem(newKey)) {
-        localStorage.setItem(newKey, oldEarnings);
-      }
-    }
-
-    // Mark migration as complete
-    localStorage.setItem(migrationKey, "true");
-  } catch (error) {
-    console.error("Error migrating old data:", error);
+    console.error("Error saving other balances:", error);
   }
 };
 
@@ -244,7 +121,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
-  const userEmail = user?.email;
 
   // Track if we've initialized data for the current user
   const initializedUserRef = useRef<string | null | undefined>(null);
@@ -262,136 +138,85 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Handle user change and initial data load
   useEffect(() => {
-    if (initializedUserRef.current !== userEmail) {
-      const previousUser = initializedUserRef.current;
-      initializedUserRef.current = userEmail;
+    if (user && initializedUserRef.current !== user.id) {
+      initializedUserRef.current = user.id;
 
-      if (userEmail) {
-        // Load data from MongoDB
-        const loadData = async () => {
-          try {
-            const [
-              loadedTransactions,
-              loadedExpenses,
-              loadedInterest,
-              loadedEarnings,
-            ] = await Promise.all([
-              transactionsAPI.getAll(userEmail),
-              expensesAPI.getAll(userEmail),
-              interestAPI.getAll(userEmail),
-              earningsAPI.getAll(userEmail),
-            ]);
+      // Load data from Firestore
+      const loadData = async () => {
+        try {
+          const [
+            loadedTransactions,
+            loadedExpenses,
+            loadedInterest,
+            loadedEarnings,
+            loadedOtherBalances,
+          ] = await Promise.all([
+            loadFromStorage(),
+            loadExpensesFromStorage(),
+            loadInterestFromStorage(),
+            loadEarningsFromStorage(),
+            loadOtherBalancesFromStorage(),
+          ]);
 
-            React.startTransition(() => {
-              setTransactions(loadedTransactions);
-              setExpenses(loadedExpenses);
-              setInterestTransactions(loadedInterest);
-              setPersonalEarnings(loadedEarnings);
-            });
+          React.startTransition(() => {
+            setTransactions(loadedTransactions);
+            setExpenses(loadedExpenses);
+            setInterestTransactions(loadedInterest);
+            setPersonalEarnings(loadedEarnings);
+            setOtherBalances(loadedOtherBalances);
+          });
+        } catch (error) {
+          console.error("Error loading data from Firestore:", error);
+        }
+      };
 
-            // Save to localStorage as backup
-            saveToStorage(loadedTransactions, userEmail);
-            saveExpensesToStorage(loadedExpenses, userEmail);
-            saveInterestToStorage(loadedInterest, userEmail);
-            saveEarningsToStorage(loadedEarnings, userEmail);
-          } catch (error) {
-            console.error(
-              "Error loading data from MongoDB, trying localStorage:",
-              error
-            );
-            // Fallback to localStorage if API fails
-            migrateOldDataToUserSpecific(userEmail);
-            const loadedTransactions = loadFromStorage(userEmail);
-            const loadedExpenses = loadExpensesFromStorage(userEmail);
-            const loadedInterest = loadInterestFromStorage(userEmail);
-            const loadedEarnings = loadEarningsFromStorage(userEmail);
-            const loadedOtherBalances = loadOtherBalancesFromStorage(userEmail);
-
-            React.startTransition(() => {
-              setTransactions(loadedTransactions);
-              setExpenses(loadedExpenses);
-              setInterestTransactions(loadedInterest);
-              setPersonalEarnings(loadedEarnings);
-              setOtherBalances(loadedOtherBalances);
-            });
-          }
-        };
-
-        loadData();
-      } else if (previousUser) {
-        // Only clear data if switching from a logged-in user to logged-out
-        React.startTransition(() => {
-          setTransactions([]);
-          setExpenses([]);
-          setInterestTransactions([]);
-          setPersonalEarnings([]);
-          setOtherBalances([]);
-        });
-      }
+      loadData();
+    } else if (!user && initializedUserRef.current) {
+      // Clear data when logging out
+      initializedUserRef.current = null;
+      React.startTransition(() => {
+        setTransactions([]);
+        setExpenses([]);
+        setInterestTransactions([]);
+        setPersonalEarnings([]);
+        setOtherBalances([]);
+      });
     }
-  }, [userEmail]);
+  }, [user]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      const newTransaction = await transactionsAPI.create(
-        userEmail,
-        transaction
-      );
-      setTransactions((prev) => [...prev, newTransaction]);
-      // Update localStorage backup
-      saveToStorage([...transactions, newTransaction], userEmail);
-    } catch (error) {
-      console.error("Error adding transaction:", error);
-      // Fallback to local storage only
-      const newTransaction: Transaction = {
-        ...transaction,
-        id: Date.now().toString(),
-        amountReturned: transaction.amountReturned || 0,
-      };
-      setTransactions((prev) => [...prev, newTransaction]);
-      saveToStorage([...transactions, newTransaction], userEmail);
-    }
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: Date.now().toString(),
+      amountReturned: transaction.amountReturned || 0,
+    };
+    
+    const updated = [...transactions, newTransaction];
+    setTransactions(updated);
+    await saveToStorage(updated);
   };
 
   const updateTransaction = async (
     id: string,
     updates: Partial<Transaction>
   ) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await transactionsAPI.update(userEmail, id, updates);
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      );
-      const updatedTransactions = transactions.map((t) =>
-        t.id === id ? { ...t, ...updates } : t
-      );
-      saveToStorage(updatedTransactions, userEmail);
-    } catch (error) {
-      console.error("Error updating transaction:", error);
-      // Still update locally
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      );
-    }
+    const updated = transactions.map((t) =>
+      t.id === id ? { ...t, ...updates } : t
+    );
+    setTransactions(updated);
+    await saveToStorage(updated);
   };
 
   const deleteTransaction = async (id: string) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await transactionsAPI.delete(userEmail, id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-      const remainingTransactions = transactions.filter((t) => t.id !== id);
-      saveToStorage(remainingTransactions, userEmail);
-    } catch (error) {
-      console.error("Error deleting transaction:", error);
-      // Still delete locally
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    }
+    const updated = transactions.filter((t) => t.id !== id);
+    setTransactions(updated);
+    await saveToStorage(updated);
   };
 
   const getDashboardStats = (): DashboardStats => {
@@ -501,55 +326,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Expense management functions
   const addExpense = async (expense: Omit<Expense, "id">) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      const newExpense = await expensesAPI.create(userEmail, expense);
-      setExpenses((prev) => [...prev, newExpense]);
-      saveExpensesToStorage([...expenses, newExpense], userEmail);
-    } catch (error) {
-      console.error("Error adding expense:", error);
-      const newExpense: Expense = {
-        ...expense,
-        id: Date.now().toString(),
-      };
-      setExpenses((prev) => [...prev, newExpense]);
-      saveExpensesToStorage([...expenses, newExpense], userEmail);
-    }
+    const newExpense: Expense = {
+      ...expense,
+      id: Date.now().toString(),
+    };
+    
+    const updated = [...expenses, newExpense];
+    setExpenses(updated);
+    await saveExpensesToStorage(updated);
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await expensesAPI.update(userEmail, id, updates);
-      setExpenses((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      );
-      const updatedExpenses = expenses.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      );
-      saveExpensesToStorage(updatedExpenses, userEmail);
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      setExpenses((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      );
-    }
+    const updated = expenses.map((e) =>
+      e.id === id ? { ...e, ...updates } : e
+    );
+    setExpenses(updated);
+    await saveExpensesToStorage(updated);
   };
 
   const deleteExpense = async (id: string) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await expensesAPI.delete(userEmail, id);
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-      const remainingExpenses = expenses.filter((e) => e.id !== id);
-      saveExpensesToStorage(remainingExpenses, userEmail);
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-    }
+    const updated = expenses.filter((e) => e.id !== id);
+    setExpenses(updated);
+    await saveExpensesToStorage(updated);
   };
 
   const getExpenseStats = (): ExpenseStats => {
@@ -588,98 +392,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const addInterestTransaction = async (
     transaction: Omit<InterestTransaction, "id">
   ) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      const newTransaction = await interestAPI.create(userEmail, transaction);
-      setInterestTransactions((prev) => [...prev, newTransaction]);
-      saveInterestToStorage(
-        [...interestTransactions, newTransaction],
-        userEmail
-      );
-    } catch (error) {
-      console.error("Error adding interest transaction:", error);
-      const newTransaction: InterestTransaction = {
-        ...transaction,
-        id: Date.now().toString(),
-      };
-      setInterestTransactions((prev) => [...prev, newTransaction]);
-      saveInterestToStorage(
-        [...interestTransactions, newTransaction],
-        userEmail
-      );
-    }
+    const newTransaction: InterestTransaction = {
+      ...transaction,
+      id: Date.now().toString(),
+    };
+    
+    const updated = [...interestTransactions, newTransaction];
+    setInterestTransactions(updated);
+    await saveInterestToStorage(updated);
   };
 
   const updateInterestTransaction = async (
     id: string,
     updates: Partial<Omit<InterestTransaction, "id">>
   ) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      const currentTransaction = interestTransactions.find((t) => t.id === id);
-      if (currentTransaction) {
-        const updatedData = { ...currentTransaction, ...updates };
-        if (updates.principal !== undefined || updates.interest !== undefined) {
-          updatedData.totalAmount =
-            (updates.principal ?? currentTransaction.principal) +
-            (updates.interest ?? currentTransaction.interest);
+    const updated = interestTransactions.map((t) => {
+      if (t.id === id) {
+        const result = { ...t, ...updates };
+        if (
+          updates.principal !== undefined ||
+          updates.interest !== undefined
+        ) {
+          result.totalAmount =
+            (updates.principal ?? t.principal) +
+            (updates.interest ?? t.interest);
         }
-        await interestAPI.update(userEmail, id, updatedData);
+        return result;
       }
-
-      setInterestTransactions((prev) =>
-        prev.map((t) => {
-          if (t.id === id) {
-            const updated = { ...t, ...updates };
-            if (
-              updates.principal !== undefined ||
-              updates.interest !== undefined
-            ) {
-              updated.totalAmount =
-                (updates.principal || t.principal) +
-                (updates.interest || t.interest);
-            }
-            return updated;
-          }
-          return t;
-        })
-      );
-    } catch (error) {
-      console.error("Error updating interest transaction:", error);
-      setInterestTransactions((prev) =>
-        prev.map((t) => {
-          if (t.id === id) {
-            const updated = { ...t, ...updates };
-            if (
-              updates.principal !== undefined ||
-              updates.interest !== undefined
-            ) {
-              updated.totalAmount =
-                (updates.principal || t.principal) +
-                (updates.interest || t.interest);
-            }
-            return updated;
-          }
-          return t;
-        })
-      );
-    }
+      return t;
+    });
+    
+    setInterestTransactions(updated);
+    await saveInterestToStorage(updated);
   };
 
   const deleteInterestTransaction = async (id: string) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await interestAPI.delete(userEmail, id);
-      setInterestTransactions((prev) => prev.filter((t) => t.id !== id));
-      const remainingInterest = interestTransactions.filter((t) => t.id !== id);
-      saveInterestToStorage(remainingInterest, userEmail);
-    } catch (error) {
-      console.error("Error deleting interest transaction:", error);
-      setInterestTransactions((prev) => prev.filter((t) => t.id !== id));
-    }
+    const updated = interestTransactions.filter((t) => t.id !== id);
+    setInterestTransactions(updated);
+    await saveInterestToStorage(updated);
   };
 
   const getInterestStats = (): InterestStats => {
@@ -702,58 +458,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Personal earnings management functions
   const addPersonalEarning = async (earning: Omit<PersonalEarning, "id">) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      const newEarning = await earningsAPI.create(userEmail, earning);
-      setPersonalEarnings((prev) => [...prev, newEarning]);
-      saveEarningsToStorage([...personalEarnings, newEarning], userEmail);
-    } catch (error) {
-      console.error("Error adding earning:", error);
-      const newEarning: PersonalEarning = {
-        ...earning,
-        id: Date.now().toString(),
-      };
-      setPersonalEarnings((prev) => [...prev, newEarning]);
-      saveEarningsToStorage([...personalEarnings, newEarning], userEmail);
-    }
+    const newEarning: PersonalEarning = {
+      ...earning,
+      id: Date.now().toString(),
+    };
+    
+    const updated = [...personalEarnings, newEarning];
+    setPersonalEarnings(updated);
+    await saveEarningsToStorage(updated);
   };
 
   const updatePersonalEarning = async (
     id: string,
     updates: Partial<Omit<PersonalEarning, "id">>
   ) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await earningsAPI.update(userEmail, id, updates);
-      setPersonalEarnings((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      );
-      const updatedEarnings = personalEarnings.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      );
-      saveEarningsToStorage(updatedEarnings, userEmail);
-    } catch (error) {
-      console.error("Error updating earning:", error);
-      setPersonalEarnings((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      );
-    }
+    const updated = personalEarnings.map((e) =>
+      e.id === id ? { ...e, ...updates } : e
+    );
+    setPersonalEarnings(updated);
+    await saveEarningsToStorage(updated);
   };
 
   const deletePersonalEarning = async (id: string) => {
-    if (!userEmail) return;
+    if (!user) return;
 
-    try {
-      await earningsAPI.delete(userEmail, id);
-      setPersonalEarnings((prev) => prev.filter((e) => e.id !== id));
-      const remainingEarnings = personalEarnings.filter((e) => e.id !== id);
-      saveEarningsToStorage(remainingEarnings, userEmail);
-    } catch (error) {
-      console.error("Error deleting earning:", error);
-      setPersonalEarnings((prev) => prev.filter((e) => e.id !== id));
-    }
+    const updated = personalEarnings.filter((e) => e.id !== id);
+    setPersonalEarnings(updated);
+    await saveEarningsToStorage(updated);
   };
 
   const getPersonalEarningsStats = (): PersonalEarningsStats => {
@@ -781,9 +516,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // Other Balances Functions
-  const addOtherBalance = (
+  const addOtherBalance = async (
     balance: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
+    if (!user) return;
+
     // Create an initial transaction for the opening balance
     const initialTransaction: OtherTransaction = {
       id: Date.now().toString(),
@@ -801,31 +538,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
     const updated = [...otherBalances, newBalance];
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
-  const updateOtherBalance = (
+  const updateOtherBalance = async (
     id: string,
     updates: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
+    if (!user) return;
+
     const updated = otherBalances.map((b) =>
       b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
     );
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
-  const deleteOtherBalance = (id: string) => {
+  const deleteOtherBalance = async (id: string) => {
+    if (!user) return;
+
     const updated = otherBalances.filter((b) => b.id !== id);
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
   // Other Transaction Functions
-  const addOtherTransaction = (
+  const addOtherTransaction = async (
     balanceId: string,
     transaction: Omit<OtherTransaction, "id">
   ) => {
+    if (!user) return;
+
     const newTransaction: OtherTransaction = {
       ...transaction,
       id: Date.now().toString(),
@@ -850,14 +593,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     });
 
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
-  const updateOtherTransaction = (
+  const updateOtherTransaction = async (
     balanceId: string,
     transactionId: string,
     updates: Partial<OtherTransaction>
   ) => {
+    if (!user) return;
+
     const updated = otherBalances.map((balance) => {
       if (balance.id === balanceId) {
         const updatedTransactions = balance.transactions.map((t) =>
@@ -879,10 +624,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     });
 
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
-  const deleteOtherTransaction = (balanceId: string, transactionId: string) => {
+  const deleteOtherTransaction = async (balanceId: string, transactionId: string) => {
+    if (!user) return;
+
     const updated = otherBalances.map((balance) => {
       if (balance.id === balanceId) {
         const updatedTransactions = balance.transactions.filter(
@@ -904,7 +651,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     });
 
     setOtherBalances(updated);
-    saveOtherBalancesToStorage(updated, userEmail);
+    await saveOtherBalancesToStorage(updated);
   };
 
   return (
