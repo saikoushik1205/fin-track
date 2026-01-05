@@ -95,58 +95,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const firebaseUser = result.user;
       console.log("Firebase user authenticated:", firebaseUser.uid);
 
-      // Check Firestore connection before trying to access it
-      console.log("Checking Firestore connection...");
-      const isConnected = await waitForFirestoreConnection(3);
+      // Create user data immediately from Firebase Auth - INSTANT LOGIN
+      const userData: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        name: firebaseUser.displayName || "User",
+        avatar: firebaseUser.photoURL || undefined,
+        provider: "google",
+        createdAt: new Date().toISOString(),
+      };
 
-      let userData: User;
-      let existingProfile: User | null = null;
-
-      if (isConnected) {
-        try {
-          console.log("Loading existing profile from Firestore...");
-          existingProfile = await getUserProfile(firebaseUser.uid);
-        } catch (profileError) {
-          console.warn(
-            "Could not load profile from Firestore, will create new:",
-            profileError
-          );
-        }
-      } else {
-        console.warn("Firestore offline - using Firebase Auth data only");
-      }
-
-      if (existingProfile) {
-        // User exists - use existing profile data
-        userData = existingProfile;
-        console.log("Existing user logged in:", userData);
-      } else {
-        // New user or couldn't load profile - use Firebase data
-        console.log("Creating user data from Firebase auth...");
-        userData = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          name: firebaseUser.displayName || "User",
-          avatar: firebaseUser.photoURL || undefined,
-          provider: "google",
-          createdAt: new Date().toISOString(),
-        };
-
-        // Try to save profile to Firestore (non-blocking)
-        if (isConnected) {
-          saveUserProfile(userData)
-            .then(() => console.log("✅ User profile saved to Firestore"))
-            .catch((err) =>
-              console.warn("⚠️ Could not save profile to Firestore:", err)
-            );
-        } else {
-          console.warn("⚠️ Skipping profile save - Firestore offline");
-        }
-      }
-
+      // Login user immediately - no waiting!
       setUser(userData);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-      console.log("✅ User logged in successfully");
+      console.log("✅ User logged in successfully (instant)");
+
+      // Load/sync profile in background (non-blocking)
+      syncUserProfile(firebaseUser.uid, userData);
     } catch (error: unknown) {
       console.error("Google sign-in error:", error);
       // Handle specific error cases
@@ -164,6 +129,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Background profile sync - doesn't block login
+  const syncUserProfile = async (userId: string, fallbackData: User) => {
+    try {
+      console.log("🔄 Syncing profile in background...");
+      const isConnected = await waitForFirestoreConnection(1);
+
+      if (isConnected) {
+        // Try to load existing profile
+        const existingProfile = await getUserProfile(userId);
+
+        if (existingProfile) {
+          // Update with stored profile (preserves createdAt date)
+          setUser(existingProfile);
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(existingProfile));
+          console.log("✅ Loaded existing profile from Firestore");
+        } else {
+          // Save new profile
+          await saveUserProfile(fallbackData);
+          console.log("✅ Saved new profile to Firestore");
+        }
+      } else {
+        console.warn("⚠️ Firestore offline - will sync when online");
+      }
+    } catch (error) {
+      console.warn("⚠️ Background profile sync failed:", error);
     }
   };
 

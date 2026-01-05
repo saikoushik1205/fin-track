@@ -31,7 +31,9 @@ export const db = getFirestore(app);
 if (typeof window !== "undefined") {
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === "failed-precondition") {
-      console.warn("Firestore persistence: Multiple tabs open, using memory cache");
+      console.warn(
+        "Firestore persistence: Multiple tabs open, using memory cache"
+      );
     } else if (err.code === "unimplemented") {
       console.warn("Firestore persistence: Not available in this browser");
     } else {

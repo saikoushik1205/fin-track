@@ -22,7 +22,7 @@ export const checkFirestoreConnection = async (): Promise<boolean> => {
 };
 
 export const waitForFirestoreConnection = async (
-  maxRetries = 3
+  maxRetries = 2
 ): Promise<boolean> => {
   for (let i = 0; i < maxRetries; i++) {
     const isConnected = await checkFirestoreConnection();
@@ -32,9 +32,11 @@ export const waitForFirestoreConnection = async (
     }
 
     if (i < maxRetries - 1) {
-      const delay = 1000 * (i + 1); // Exponential backoff: 1s, 2s, 3s
+      const delay = 500; // Fast 500ms retry
       console.log(
-        `Retrying Firestore connection in ${delay}ms... (${i + 1}/${maxRetries})`
+        `Retrying Firestore connection in ${delay}ms... (${
+          i + 1
+        }/${maxRetries})`
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
