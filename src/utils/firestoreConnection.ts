@@ -5,7 +5,7 @@ export const checkFirestoreConnection = async (): Promise<boolean> => {
   try {
     // Give Firestore time to initialize
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     // Try to read a test document to check connection
     const testRef = doc(db, "_connection_test_", "test");
     await getDoc(testRef);
@@ -17,7 +17,7 @@ export const checkFirestoreConnection = async (): Promise<boolean> => {
       console.log("✅ Firestore connected (permission-denied = online)");
       return true;
     }
-    
+
     if (
       error.code === "unavailable" ||
       error.message?.includes("offline") ||
@@ -26,7 +26,7 @@ export const checkFirestoreConnection = async (): Promise<boolean> => {
       console.warn("⚠️ Firestore initializing or offline:", error.message);
       return false;
     }
-    
+
     // Other errors - assume connected
     return true;
   }
@@ -37,7 +37,7 @@ export const waitForFirestoreConnection = async (
 ): Promise<boolean> => {
   // Initial delay to let Firestore initialize
   await new Promise((resolve) => setTimeout(resolve, 200));
-  
+
   for (let i = 0; i < maxRetries; i++) {
     const isConnected = await checkFirestoreConnection();
     if (isConnected) {
