@@ -28,12 +28,12 @@ const getUserId = () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const removeUndefined = (obj: any): any => {
   if (Array.isArray(obj)) {
-    return obj.map(item => removeUndefined(item));
+    return obj.map((item) => removeUndefined(item));
   }
-  if (obj !== null && typeof obj === 'object') {
+  if (obj !== null && typeof obj === "object") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cleaned: any = {};
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj).forEach((key) => {
       if (obj[key] !== undefined) {
         cleaned[key] = removeUndefined(obj[key]);
       }

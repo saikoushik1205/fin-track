@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -27,17 +27,5 @@ googleProvider.setCustomParameters({
 // Initialize Firestore
 export const db = getFirestore(app);
 
-// Enable offline persistence (with error handling)
-if (typeof window !== "undefined") {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === "failed-precondition") {
-      console.warn(
-        "Firestore persistence: Multiple tabs open, using memory cache"
-      );
-    } else if (err.code === "unimplemented") {
-      console.warn("Firestore persistence: Not available in this browser");
-    } else {
-      console.warn("Firestore persistence error:", err);
-    }
-  });
-}
+// Note: Offline persistence disabled to prevent connection issues
+// Firestore will still cache data automatically in memory

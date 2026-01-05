@@ -143,30 +143,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const syncUserProfile = async (userId: string, fallbackData: User) => {
     try {
       console.log("🔄 Syncing profile in background...");
-      const isConnected = await waitForFirestoreConnection(5);
+      
+      // Wait briefly for Firestore to initialize, then proceed regardless
+      await waitForFirestoreConnection(2);
 
-      if (isConnected) {
-        // Try to load existing profile
-        const existingProfile = await getUserProfile(userId);
+      // Try to load existing profile
+      const existingProfile = await getUserProfile(userId);
 
-        if (existingProfile) {
-          // Update with stored profile (preserves createdAt date)
-          setUser(existingProfile);
-          localStorage.setItem(
-            AUTH_STORAGE_KEY,
-            JSON.stringify(existingProfile)
-          );
-          console.log("✅ Loaded existing profile from Firestore");
-        } else {
-          // Save new profile
-          await saveUserProfile(fallbackData);
-          console.log("✅ Saved new profile to Firestore");
-        }
+      if (existingProfile) {
+        // Update with stored profile (preserves createdAt date)
+        setUser(existingProfile);
+        localStorage.setItem(
+          AUTH_STORAGE_KEY,
+          JSON.stringify(existingProfile)
+        );
+        console.log("✅ Loaded existing profile from Firestore");
       } else {
-        console.warn("⚠️ Firestore offline - will sync when online");
+        // Save new profile
+        await saveUserProfile(fallbackData);
+        console.log("✅ Saved new profile to Firestore");
       }
     } catch (error) {
-      console.warn("⚠️ Background profile sync failed:", error);
+      console.warn("⚠️ Background profile sync failed, using cached data:", error);
+      // Keep using the fallback data that's already set
     }
   };
 
