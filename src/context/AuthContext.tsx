@@ -5,6 +5,7 @@ import { AuthContext } from "./createAuthContext";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
 import { getUserProfile, saveUserProfile } from "../services/firestore";
+import { waitForFirestoreConnection } from "../utils/firestoreConnection";
 
 const AUTH_STORAGE_KEY = "fintrack_auth_user";
 
@@ -94,18 +95,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const firebaseUser = result.user;
       console.log("Firebase user authenticated:", firebaseUser.uid);
 
-      // Try to get existing profile, but don't block on failure
+      // Check Firestore connection before trying to access it
+      console.log("Checking Firestore connection...");
+      const isConnected = await waitForFirestoreConnection(3);
+
       let userData: User;
       let existingProfile: User | null = null;
 
-      try {
-        console.log("Checking for existing profile...");
-        existingProfile = await getUserProfile(firebaseUser.uid);
-      } catch (profileError) {
-        console.warn(
-          "Could not load profile from Firestore (possibly offline), using Firebase data:",
-          profileError
-        );
+      if (isConnected) {
+        try {
+          console.log("Loading existing profile from Firestore...");
+          existingProfile = await getUserProfile(firebaseUser.uid);
+        } catch (profileError) {
+          console.warn(
+            "Could not load profile from Firestore, will create new:",
+            profileError
+          );
+        }
+      } else {
+        console.warn("Firestore offline - using Firebase Auth data only");
       }
 
       if (existingProfile) {
@@ -125,16 +133,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         };
 
         // Try to save profile to Firestore (non-blocking)
-        saveUserProfile(userData)
-          .then(() => console.log("User profile saved to Firestore"))
-          .catch((err) =>
-            console.warn("Could not save profile to Firestore:", err)
-          );
+        if (isConnected) {
+          saveUserProfile(userData)
+            .then(() => console.log("✅ User profile saved to Firestore"))
+            .catch((err) =>
+              console.warn("⚠️ Could not save profile to Firestore:", err)
+            );
+        } else {
+          console.warn("⚠️ Skipping profile save - Firestore offline");
+        }
       }
 
       setUser(userData);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-      console.log("User logged in successfully");
+      console.log("✅ User logged in successfully");
     } catch (error: unknown) {
       console.error("Google sign-in error:", error);
       // Handle specific error cases

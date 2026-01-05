@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -22,3 +23,19 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: "select_account",
 });
+
+// Initialize Firestore
+export const db = getFirestore(app);
+
+// Enable offline persistence (with error handling)
+if (typeof window !== "undefined") {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === "failed-precondition") {
+      console.warn("Firestore persistence: Multiple tabs open, using memory cache");
+    } else if (err.code === "unimplemented") {
+      console.warn("Firestore persistence: Not available in this browser");
+    } else {
+      console.warn("Firestore persistence error:", err);
+    }
+  });
+}
