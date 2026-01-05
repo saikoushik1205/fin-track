@@ -32,9 +32,12 @@ import {
 // Firestore-based data persistence
 const saveToStorage = async (transactions: Transaction[]) => {
   try {
+    console.log("💾 Saving transaction, total:", transactions.length);
     await saveTransactionsToFirestore(transactions);
+    console.log("✅ Transaction saved successfully");
   } catch (error) {
-    console.error("Error saving transactions:", error);
+    console.error("❌ Error saving transactions:", error);
+    throw error; // Re-throw to let caller handle
   }
 };
 
@@ -49,9 +52,12 @@ const loadFromStorage = async (): Promise<Transaction[]> => {
 
 const saveExpensesToStorage = async (expenses: Expense[]) => {
   try {
+    console.log("💾 Saving expenses, total:", expenses.length);
     await saveExpensesToFirestore(expenses);
+    console.log("✅ Expenses saved successfully");
   } catch (error) {
-    console.error("Error saving expenses:", error);
+    console.error("❌ Error saving expenses:", error);
+    throw error;
   }
 };
 
@@ -77,9 +83,12 @@ const saveInterestToStorage = async (
   interestTransactions: InterestTransaction[]
 ) => {
   try {
+    console.log("💾 Saving interest, total:", interestTransactions.length);
     await saveInterestToFirestore(interestTransactions);
+    console.log("✅ Interest saved successfully");
   } catch (error) {
-    console.error("Error saving interest:", error);
+    console.error("❌ Error saving interest:", error);
+    throw error;
   }
 };
 
@@ -94,9 +103,12 @@ const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
 
 const saveEarningsToStorage = async (earnings: PersonalEarning[]) => {
   try {
+    console.log("💾 Saving earnings, total:", earnings.length);
     await saveEarningsToFirestore(earnings);
+    console.log("✅ Earnings saved successfully");
   } catch (error) {
-    console.error("Error saving earnings:", error);
+    console.error("❌ Error saving earnings:", error);
+    throw error;
   }
 };
 
@@ -111,9 +123,12 @@ const loadOtherBalancesFromStorage = async (): Promise<OtherBalance[]> => {
 
 const saveOtherBalancesToStorage = async (balances: OtherBalance[]) => {
   try {
+    console.log("💾 Saving other balances, total:", balances.length);
     await saveOtherBalancesToFirestore(balances);
+    console.log("✅ Other balances saved successfully");
   } catch (error) {
-    console.error("Error saving other balances:", error);
+    console.error("❌ Error saving other balances:", error);
+    throw error;
   }
 };
 
@@ -141,7 +156,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (user && initializedUserRef.current !== user.id) {
       initializedUserRef.current = user.id;
-      setIsDataLoaded(false);
+      // Data loading will set isDataLoaded to true after completion
 
       // Load data from Firestore
       const loadData = async () => {
@@ -188,20 +203,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       // Clear data when logging out
       console.log("🚪 User logged out, clearing data");
       initializedUserRef.current = null;
-      setIsDataLoaded(false);
       React.startTransition(() => {
         setTransactions([]);
         setExpenses([]);
         setInterestTransactions([]);
         setPersonalEarnings([]);
         setOtherBalances([]);
+        setIsDataLoaded(false);
       });
     }
   }, [user]);
 
   const addTransaction = async (transaction: Omit<Transaction, "id">) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot add transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot add transaction: user not ready or data not loaded"
+      );
       return;
     }
 
@@ -212,10 +229,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     const updated = [...transactions, newTransaction];
-    console.log("💾 Saving transaction, total:", updated.length);
     setTransactions(updated);
     await saveToStorage(updated);
-    console.log("✅ Transaction saved successfully");
   };
 
   const updateTransaction = async (
@@ -223,11 +238,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Transaction>
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot update transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot update transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🔄 Updating transaction ${id}, current count: ${transactions.length}`);
+    console.log(
+      `🔄 Updating transaction ${id}, current count: ${transactions.length}`
+    );
     const updated = transactions.map((t) =>
       t.id === id ? { ...t, ...updates } : t
     );
@@ -238,11 +257,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteTransaction = async (id: string) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot delete transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot delete transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🗑️ Deleting transaction ${id}, current count: ${transactions.length}`);
+    console.log(
+      `🗑️ Deleting transaction ${id}, current count: ${transactions.length}`
+    );
     const updated = transactions.filter((t) => t.id !== id);
     setTransactions(updated);
     await saveToStorage(updated);
@@ -375,7 +398,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot update expense: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot update expense: user not ready or data not loaded"
+      );
       return;
     }
 
@@ -390,7 +415,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteExpense = async (id: string) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot delete expense: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot delete expense: user not ready or data not loaded"
+      );
       return;
     }
 
@@ -438,11 +465,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transaction: Omit<InterestTransaction, "id">
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot add interest transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot add interest transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`💰 Adding interest transaction, current count: ${interestTransactions.length}`);
+    console.log(
+      `💰 Adding interest transaction, current count: ${interestTransactions.length}`
+    );
     const newTransaction: InterestTransaction = {
       ...transaction,
       id: Date.now().toString(),
@@ -451,7 +482,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const updated = [...interestTransactions, newTransaction];
     setInterestTransactions(updated);
     await saveInterestToStorage(updated);
-    console.log(`✅ Interest transaction added and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Interest transaction added and saved, count: ${updated.length}`
+    );
   };
 
   const updateInterestTransaction = async (
@@ -459,11 +492,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Omit<InterestTransaction, "id">>
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot update interest transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot update interest transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🔄 Updating interest transaction ${id}, current count: ${interestTransactions.length}`);
+    console.log(
+      `🔄 Updating interest transaction ${id}, current count: ${interestTransactions.length}`
+    );
     const updated = interestTransactions.map((t) => {
       if (t.id === id) {
         const result = { ...t, ...updates };
@@ -479,20 +516,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     setInterestTransactions(updated);
     await saveInterestToStorage(updated);
-    console.log(`✅ Interest transaction updated and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Interest transaction updated and saved, count: ${updated.length}`
+    );
   };
 
   const deleteInterestTransaction = async (id: string) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot delete interest transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot delete interest transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🗑️ Deleting interest transaction ${id}, current count: ${interestTransactions.length}`);
+    console.log(
+      `🗑️ Deleting interest transaction ${id}, current count: ${interestTransactions.length}`
+    );
     const updated = interestTransactions.filter((t) => t.id !== id);
     setInterestTransactions(updated);
     await saveInterestToStorage(updated);
-    console.log(`✅ Interest transaction deleted and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Interest transaction deleted and saved, count: ${updated.length}`
+    );
   };
 
   const getInterestStats = (): InterestStats => {
@@ -516,11 +561,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Personal earnings management functions
   const addPersonalEarning = async (earning: Omit<PersonalEarning, "id">) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot add personal earning: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot add personal earning: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`💵 Adding personal earning, current count: ${personalEarnings.length}`);
+    console.log(
+      `💵 Adding personal earning, current count: ${personalEarnings.length}`
+    );
     const newEarning: PersonalEarning = {
       ...earning,
       id: Date.now().toString(),
@@ -529,7 +578,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const updated = [...personalEarnings, newEarning];
     setPersonalEarnings(updated);
     await saveEarningsToStorage(updated);
-    console.log(`✅ Personal earning added and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Personal earning added and saved, count: ${updated.length}`
+    );
   };
 
   const updatePersonalEarning = async (
@@ -537,30 +588,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Omit<PersonalEarning, "id">>
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot update personal earning: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot update personal earning: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🔄 Updating personal earning ${id}, current count: ${personalEarnings.length}`);
+    console.log(
+      `🔄 Updating personal earning ${id}, current count: ${personalEarnings.length}`
+    );
     const updated = personalEarnings.map((e) =>
       e.id === id ? { ...e, ...updates } : e
     );
     setPersonalEarnings(updated);
     await saveEarningsToStorage(updated);
-    console.log(`✅ Personal earning updated and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Personal earning updated and saved, count: ${updated.length}`
+    );
   };
 
   const deletePersonalEarning = async (id: string) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot delete personal earning: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot delete personal earning: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🗑️ Deleting personal earning ${id}, current count: ${personalEarnings.length}`);
+    console.log(
+      `🗑️ Deleting personal earning ${id}, current count: ${personalEarnings.length}`
+    );
     const updated = personalEarnings.filter((e) => e.id !== id);
     setPersonalEarnings(updated);
     await saveEarningsToStorage(updated);
-    console.log(`✅ Personal earning deleted and saved, count: ${updated.length}`);
+    console.log(
+      `✅ Personal earning deleted and saved, count: ${updated.length}`
+    );
   };
 
   const getPersonalEarningsStats = (): PersonalEarningsStats => {
@@ -592,11 +655,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     balance: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot add other balance: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot add other balance: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🏦 Adding other balance, current count: ${otherBalances.length}`);
+    console.log(
+      `🏦 Adding other balance, current count: ${otherBalances.length}`
+    );
     // Create an initial transaction for the opening balance
     const initialTransaction: OtherTransaction = {
       id: Date.now().toString(),
@@ -623,11 +690,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot update other balance: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot update other balance: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🔄 Updating other balance ${id}, current count: ${otherBalances.length}`);
+    console.log(
+      `🔄 Updating other balance ${id}, current count: ${otherBalances.length}`
+    );
     const updated = otherBalances.map((b) =>
       b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
     );
@@ -638,11 +709,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteOtherBalance = async (id: string) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot delete other balance: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot delete other balance: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`🗑️ Deleting other balance ${id}, current count: ${otherBalances.length}`);
+    console.log(
+      `🗑️ Deleting other balance ${id}, current count: ${otherBalances.length}`
+    );
     const updated = otherBalances.filter((b) => b.id !== id);
     setOtherBalances(updated);
     await saveOtherBalancesToStorage(updated);
@@ -655,7 +730,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transaction: Omit<OtherTransaction, "id">
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("⚠️ Cannot add other transaction: user not ready or data not loaded");
+      console.warn(
+        "⚠️ Cannot add other transaction: user not ready or data not loaded"
+      );
       return;
     }
 
@@ -694,11 +771,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<OtherTransaction>
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("\u26a0\ufe0f Cannot update other transaction: user not ready or data not loaded");
+      console.warn(
+        "\u26a0\ufe0f Cannot update other transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`\ud83d\udd04 Updating other transaction ${transactionId} in balance ${balanceId}`);
+    console.log(
+      `\ud83d\udd04 Updating other transaction ${transactionId} in balance ${balanceId}`
+    );
     const updated = otherBalances.map((balance) => {
       if (balance.id === balanceId) {
         const updatedTransactions = balance.transactions.map((t) =>
@@ -721,7 +802,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     setOtherBalances(updated);
     await saveOtherBalancesToStorage(updated);
-    console.log(`\u2705 Other transaction updated and saved in balance ${balanceId}`);
+    console.log(
+      `\u2705 Other transaction updated and saved in balance ${balanceId}`
+    );
   };
 
   const deleteOtherTransaction = async (
@@ -729,11 +812,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transactionId: string
   ) => {
     if (!user || !isDataLoaded) {
-      console.warn("\u26a0\ufe0f Cannot delete other transaction: user not ready or data not loaded");
+      console.warn(
+        "\u26a0\ufe0f Cannot delete other transaction: user not ready or data not loaded"
+      );
       return;
     }
 
-    console.log(`\ud83d\uddd1\ufe0f Deleting other transaction ${transactionId} from balance ${balanceId}`);
+    console.log(
+      `\ud83d\uddd1\ufe0f Deleting other transaction ${transactionId} from balance ${balanceId}`
+    );
     const updated = otherBalances.map((balance) => {
       if (balance.id === balanceId) {
         const updatedTransactions = balance.transactions.filter(
@@ -756,7 +843,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     setOtherBalances(updated);
     await saveOtherBalancesToStorage(updated);
-    console.log(`\u2705 Other transaction deleted and saved from balance ${balanceId}`);
+    console.log(
+      `\u2705 Other transaction deleted and saved from balance ${balanceId}`
+    );
   };
 
   return (

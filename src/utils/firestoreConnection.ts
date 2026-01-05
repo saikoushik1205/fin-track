@@ -22,7 +22,7 @@ export const checkFirestoreConnection = async (): Promise<boolean> => {
 };
 
 export const waitForFirestoreConnection = async (
-  maxRetries = 2
+  maxRetries = 5
 ): Promise<boolean> => {
   for (let i = 0; i < maxRetries; i++) {
     const isConnected = await checkFirestoreConnection();

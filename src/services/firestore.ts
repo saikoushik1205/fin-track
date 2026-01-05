@@ -24,6 +24,25 @@ const getUserId = () => {
   return user.uid;
 };
 
+// Helper to remove undefined values (Firestore doesn't support undefined)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const removeUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefined(item));
+  }
+  if (obj !== null && typeof obj === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cleaned: any = {};
+    Object.keys(obj).forEach(key => {
+      if (obj[key] !== undefined) {
+        cleaned[key] = removeUndefined(obj[key]);
+      }
+    });
+    return cleaned;
+  }
+  return obj;
+};
+
 // Helper to convert Firestore timestamp to Date
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const convertTimestamps = (data: any): any => {
@@ -47,9 +66,15 @@ const convertTimestamps = (data: any): any => {
 
 // Transactions
 export const saveTransactions = async (transactions: Transaction[]) => {
-  const userId = getUserId();
-  const docRef = doc(db, "users", userId, "data", "transactions");
-  await setDoc(docRef, { transactions });
+  try {
+    const userId = getUserId();
+    const docRef = doc(db, "users", userId, "data", "transactions");
+    const cleanedTransactions = removeUndefined(transactions);
+    await setDoc(docRef, { transactions: cleanedTransactions });
+  } catch (error) {
+    console.error("Error saving transactions:", error);
+    throw error;
+  }
 };
 
 export const loadTransactions = async (): Promise<Transaction[]> => {
@@ -71,9 +96,15 @@ export const loadTransactions = async (): Promise<Transaction[]> => {
 
 // Expenses
 export const saveExpenses = async (expenses: Expense[]) => {
-  const userId = getUserId();
-  const docRef = doc(db, "users", userId, "data", "expenses");
-  await setDoc(docRef, { expenses });
+  try {
+    const userId = getUserId();
+    const docRef = doc(db, "users", userId, "data", "expenses");
+    const cleanedExpenses = removeUndefined(expenses);
+    await setDoc(docRef, { expenses: cleanedExpenses });
+  } catch (error) {
+    console.error("Error saving expenses:", error);
+    throw error;
+  }
 };
 
 export const loadExpenses = async (): Promise<Expense[]> => {
@@ -97,9 +128,15 @@ export const loadExpenses = async (): Promise<Expense[]> => {
 export const saveInterestTransactions = async (
   interestTransactions: InterestTransaction[]
 ) => {
-  const userId = getUserId();
-  const docRef = doc(db, "users", userId, "data", "interest");
-  await setDoc(docRef, { interestTransactions });
+  try {
+    const userId = getUserId();
+    const docRef = doc(db, "users", userId, "data", "interest");
+    const cleanedInterest = removeUndefined(interestTransactions);
+    await setDoc(docRef, { interestTransactions: cleanedInterest });
+  } catch (error) {
+    console.error("Error saving interest transactions:", error);
+    throw error;
+  }
 };
 
 export const loadInterestTransactions = async (): Promise<
@@ -123,9 +160,15 @@ export const loadInterestTransactions = async (): Promise<
 
 // Personal Earnings
 export const saveEarnings = async (earnings: PersonalEarning[]) => {
-  const userId = getUserId();
-  const docRef = doc(db, "users", userId, "data", "earnings");
-  await setDoc(docRef, { earnings });
+  try {
+    const userId = getUserId();
+    const docRef = doc(db, "users", userId, "data", "earnings");
+    const cleanedEarnings = removeUndefined(earnings);
+    await setDoc(docRef, { earnings: cleanedEarnings });
+  } catch (error) {
+    console.error("Error saving earnings:", error);
+    throw error;
+  }
 };
 
 export const loadEarnings = async (): Promise<PersonalEarning[]> => {
@@ -147,9 +190,15 @@ export const loadEarnings = async (): Promise<PersonalEarning[]> => {
 
 // Other Balances
 export const saveOtherBalances = async (balances: OtherBalance[]) => {
-  const userId = getUserId();
-  const docRef = doc(db, "users", userId, "data", "otherBalances");
-  await setDoc(docRef, { balances });
+  try {
+    const userId = getUserId();
+    const docRef = doc(db, "users", userId, "data", "otherBalances");
+    const cleanedBalances = removeUndefined(balances);
+    await setDoc(docRef, { balances: cleanedBalances });
+  } catch (error) {
+    console.error("Error saving other balances:", error);
+    throw error;
+  }
 };
 
 export const loadOtherBalances = async (): Promise<OtherBalance[]> => {

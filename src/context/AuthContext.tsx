@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const syncUserProfile = async (userId: string, fallbackData: User) => {
     try {
       console.log("🔄 Syncing profile in background...");
-      const isConnected = await waitForFirestoreConnection(1);
+      const isConnected = await waitForFirestoreConnection(5);
 
       if (isConnected) {
         // Try to load existing profile
