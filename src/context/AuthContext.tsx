@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { User } from "../types/auth";
 import { AuthContext } from "./createAuthContext";
-import { signInWithPopup } from "firebase/auth";
+import {
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
 import { getUserProfile, saveUserProfile } from "../services/firestore";
 import { waitForFirestoreConnection } from "../utils/firestoreConnection";
@@ -24,31 +29,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Real Firebase email/password authentication
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = result.user;
 
-      // Mock authentication - In production, validate against backend
-      const storedUsers = JSON.parse(
-        localStorage.getItem("fintrack_users") || "[]"
-      );
-      const foundUser = storedUsers.find(
-        (u: { email: string; password: string }) =>
-          u.email === email && u.password === password
-      );
-
-      if (!foundUser) {
-        throw new Error("Invalid email or password");
-      }
-
+      // Create user data from Firebase Auth
       const userData: User = {
-        id: foundUser.id,
-        email: foundUser.email,
-        name: foundUser.name,
+        id: firebaseUser.uid,
+        email: firebaseUser.email || email,
+        name: firebaseUser.displayName || "User",
+        avatar: firebaseUser.photoURL || undefined,
         provider: "email",
+        createdAt: new Date().toISOString(),
       };
 
       setUser(userData);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      console.log("✅ Email login successful");
+
+      // Load profile in background
+      syncUserProfile(firebaseUser.uid, userData);
     } finally {
       setIsLoading(false);
     }
@@ -57,28 +57,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const register = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock registration - In production, send to backend
-      const storedUsers = JSON.parse(
-        localStorage.getItem("fintrack_users") || "[]"
-      );
-
-      // Check if user already exists
-      if (storedUsers.some((u: { email: string }) => u.email === email)) {
-        throw new Error("User already exists");
-      }
-
-      const newUser = {
-        id: Date.now().toString(),
+      // Real Firebase email/password registration
+      const result = await createUserWithEmailAndPassword(
+        auth,
         email,
-        password, // In production, never store plain passwords
-        name,
+        password
+      );
+      const firebaseUser = result.user;
+
+      // Update Firebase profile with display name
+      await updateProfile(firebaseUser, {
+        displayName: name,
+      });
+
+      // Create user data
+      const userData: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || email,
+        name: name,
+        provider: "email",
+        createdAt: new Date().toISOString(),
       };
 
-      storedUsers.push(newUser);
-      localStorage.setItem("fintrack_users", JSON.stringify(storedUsers));
+      // Save profile to Firestore
+      try {
+        await saveUserProfile(userData);
+        console.log("✅ New user registered and profile saved");
+      } catch (error) {
+        console.warn("⚠️ Could not save profile:", error);
+      }
 
       // Don't auto-login after registration - user will be redirected to login page
     } finally {
@@ -145,7 +152,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (existingProfile) {
           // Update with stored profile (preserves createdAt date)
           setUser(existingProfile);
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(existingProfile));
+          localStorage.setItem(
+            AUTH_STORAGE_KEY,
+            JSON.stringify(existingProfile)
+          );
           console.log("✅ Loaded existing profile from Firestore");
         } else {
           // Save new profile
