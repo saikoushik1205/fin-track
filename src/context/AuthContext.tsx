@@ -94,19 +94,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const firebaseUser = result.user;
       console.log("Firebase user authenticated:", firebaseUser.uid);
 
-      // Check if user profile exists in Firestore
-      console.log("Checking for existing profile...");
-      const existingProfile = await getUserProfile(firebaseUser.uid);
-
+      // Try to get existing profile, but don't block on failure
       let userData: User;
+      let existingProfile: User | null = null;
+
+      try {
+        console.log("Checking for existing profile...");
+        existingProfile = await getUserProfile(firebaseUser.uid);
+      } catch (profileError) {
+        console.warn(
+          "Could not load profile from Firestore (possibly offline), using Firebase data:",
+          profileError
+        );
+      }
 
       if (existingProfile) {
         // User exists - use existing profile data
         userData = existingProfile;
         console.log("Existing user logged in:", userData);
       } else {
-        // New user - create profile
-        console.log("Creating new user profile...");
+        // New user or couldn't load profile - use Firebase data
+        console.log("Creating user data from Firebase auth...");
         userData = {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
@@ -116,14 +124,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           createdAt: new Date().toISOString(),
         };
 
-        // Save new profile to Firestore
-        try {
-          await saveUserProfile(userData);
-          console.log("New user profile saved successfully");
-        } catch (profileError) {
-          console.warn("Failed to save profile to Firestore, continuing anyway:", profileError);
-          // Don't block login if profile save fails
-        }
+        // Try to save profile to Firestore (non-blocking)
+        saveUserProfile(userData)
+          .then(() => console.log("User profile saved to Firestore"))
+          .catch((err) =>
+            console.warn("Could not save profile to Firestore:", err)
+          );
       }
 
       setUser(userData);
@@ -138,7 +144,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else if (firebaseError.code === "auth/popup-blocked") {
         throw new Error("Popup blocked. Please allow popups for this site.");
       } else {
-        throw new Error(`Failed to sign in with Google: ${firebaseError.message || "Unknown error"}`);
+        throw new Error(
+          `Failed to sign in with Google: ${
+            firebaseError.message || "Unknown error"
+          }`
+        );
       }
     } finally {
       setIsLoading(false);
