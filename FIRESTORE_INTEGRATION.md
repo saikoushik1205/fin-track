@@ -3,6 +3,7 @@
 ## ✅ What I Did:
 
 1. **Created Firestore Service** (`src/services/firestore.ts`)
+
    - All data now stored in Firebase Firestore
    - User-specific data isolation (uses Firebase UID)
    - Automatic timestamp conversion

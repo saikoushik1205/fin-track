@@ -4,6 +4,7 @@ import type { User } from "../types/auth";
 import { AuthContext } from "./createAuthContext";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
+import { getUserProfile, saveUserProfile } from "../services/firestore";
 
 const AUTH_STORAGE_KEY = "fintrack_auth_user";
 
@@ -91,13 +92,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
 
-      const userData: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || "",
-        name: firebaseUser.displayName || "User",
-        avatar: firebaseUser.photoURL || undefined,
-        provider: "google",
-      };
+      // Check if user profile exists in Firestore
+      const existingProfile = await getUserProfile(firebaseUser.uid);
+
+      let userData: User;
+      
+      if (existingProfile) {
+        // User exists - use existing profile data
+        userData = existingProfile;
+        console.log("Existing user logged in:", userData);
+      } else {
+        // New user - create profile
+        userData = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          name: firebaseUser.displayName || "User",
+          avatar: firebaseUser.photoURL || undefined,
+          provider: "google",
+          createdAt: new Date().toISOString(),
+        };
+        
+        // Save new profile to Firestore
+        await saveUserProfile(userData);
+        console.log("New user profile created:", userData);
+      }
 
       setUser(userData);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));

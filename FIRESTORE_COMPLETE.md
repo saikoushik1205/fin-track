@@ -7,6 +7,7 @@ All data now syncs across devices and domains using Firebase Firestore!
 ## What Was Changed
 
 ### 1. Created Firestore Service Layer
+
 - **File**: `src/services/firestore.ts`
 - Complete CRUD operations for all data types:
   - Transactions (lending/borrowing)
@@ -18,6 +19,7 @@ All data now syncs across devices and domains using Firebase Firestore!
 - User-specific data isolation using Firebase UID
 
 ### 2. Updated AppContext
+
 - **File**: `src/context/AppContext.tsx`
 - Replaced all localStorage calls with Firestore
 - All CRUD functions now async (use `await`)
@@ -32,10 +34,12 @@ All data now syncs across devices and domains using Firebase Firestore!
 Before testing, you **MUST** enable Firestore in Firebase Console:
 
 1. **Go to Firebase Console**
+
    - Visit: https://console.firebase.google.com
    - Select your project: **lend-tracker-6020d**
 
 2. **Enable Firestore Database**
+
    - Click on "Firestore Database" in the left sidebar
    - Click "Create database"
    - Choose **Production mode** (we'll set rules below)
@@ -58,7 +62,7 @@ service cloud.firestore {
 }
 ```
 
-   - Click "Publish"
+- Click "Publish"
 
 4. **Verify Setup**
    - Go to the "Data" tab
@@ -68,6 +72,7 @@ service cloud.firestore {
 ## How It Works
 
 ### Data Structure
+
 ```
 /users/{userId}/data/
   ├── transactions/     # All lending/borrowing transactions
@@ -78,11 +83,13 @@ service cloud.firestore {
 ```
 
 ### Security
+
 - Each user can only access their own data
 - User ID comes from Firebase Authentication (Google/Email)
 - Server-side security rules enforce access control
 
 ### Sync Behavior
+
 - **Add/Update/Delete**: Instantly saves to Firestore
 - **Load**: Fetches from Firestore on login
 - **Cross-Device**: Same data everywhere
@@ -91,6 +98,7 @@ service cloud.firestore {
 ## Testing the Integration
 
 ### Test Locally
+
 1. Start dev server: `npm run dev`
 2. Login with Google (recommended for testing)
 3. Add a transaction/expense
@@ -98,12 +106,15 @@ service cloud.firestore {
 5. You should see your data under `users/{your-uid}/data/`
 
 ### Test Cross-Device Sync
+
 1. **On Localhost** (http://localhost:5173):
+
    - Login with your Google account
    - Add a transaction: "Test Local"
    - Check that it appears in the list
 
 2. **On Vercel** (https://fin-track-peach-psi.vercel.app):
+
    - Login with the **same** Google account
    - You should see "Test Local" transaction
    - Add another: "Test Vercel"
@@ -115,6 +126,7 @@ service cloud.firestore {
 ## Deployment
 
 ### 1. Commit and Push
+
 ```bash
 git add .
 git commit -m "Complete Firestore integration for cross-device data sync"
@@ -122,6 +134,7 @@ git push origin main
 ```
 
 ### 2. Vercel Auto-Deploy
+
 - Vercel will automatically deploy
 - Check: https://fin-track-peach-psi.vercel.app
 - Data will sync immediately!
@@ -129,22 +142,26 @@ git push origin main
 ## Troubleshooting
 
 ### "No authenticated user" error
+
 - Make sure you're logged in with Google
 - Check that Firebase Auth is working
 - Email/password login uses mock auth (won't sync to Firestore)
 
 ### Data not appearing
+
 - Check Firebase Console → Firestore Database
 - Verify security rules are set correctly
 - Make sure you enabled Firestore (Production mode)
 - Check browser console for errors
 
 ### Data appears locally but not on Vercel
+
 - Make sure you're using the **same** Google account on both
 - Different accounts have different user IDs = different data
 - Check that Firestore is enabled (not just Auth)
 
 ### Permission denied errors
+
 - Security rules must allow access to `/users/{userId}/data/`
 - User must be authenticated (logged in)
 - Firebase UID must match the path userId

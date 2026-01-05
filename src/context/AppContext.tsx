@@ -192,7 +192,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       id: Date.now().toString(),
       amountReturned: transaction.amountReturned || 0,
     };
-    
+
     const updated = [...transactions, newTransaction];
     setTransactions(updated);
     await saveToStorage(updated);
@@ -332,7 +332,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ...expense,
       id: Date.now().toString(),
     };
-    
+
     const updated = [...expenses, newExpense];
     setExpenses(updated);
     await saveExpensesToStorage(updated);
@@ -398,7 +398,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ...transaction,
       id: Date.now().toString(),
     };
-    
+
     const updated = [...interestTransactions, newTransaction];
     setInterestTransactions(updated);
     await saveInterestToStorage(updated);
@@ -413,10 +413,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const updated = interestTransactions.map((t) => {
       if (t.id === id) {
         const result = { ...t, ...updates };
-        if (
-          updates.principal !== undefined ||
-          updates.interest !== undefined
-        ) {
+        if (updates.principal !== undefined || updates.interest !== undefined) {
           result.totalAmount =
             (updates.principal ?? t.principal) +
             (updates.interest ?? t.interest);
@@ -425,7 +422,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       }
       return t;
     });
-    
+
     setInterestTransactions(updated);
     await saveInterestToStorage(updated);
   };
@@ -464,7 +461,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ...earning,
       id: Date.now().toString(),
     };
-    
+
     const updated = [...personalEarnings, newEarning];
     setPersonalEarnings(updated);
     await saveEarningsToStorage(updated);
@@ -627,7 +624,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     await saveOtherBalancesToStorage(updated);
   };
 
-  const deleteOtherTransaction = async (balanceId: string, transactionId: string) => {
+  const deleteOtherTransaction = async (
+    balanceId: string,
+    transactionId: string
+  ) => {
     if (!user) return;
 
     const updated = otherBalances.map((balance) => {

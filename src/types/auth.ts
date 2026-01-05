@@ -4,6 +4,7 @@ export interface User {
   name: string;
   avatar?: string;
   provider?: "email" | "google";
+  createdAt?: string;
 }
 
 export interface AuthState {
