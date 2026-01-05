@@ -171,24 +171,31 @@ export const loadOtherBalances = async (): Promise<OtherBalance[]> => {
 
 // User Profile Management
 export const saveUserProfile = async (user: User): Promise<void> => {
-  const docRef = doc(db, "users", user.id, "profile", "info");
-  await setDoc(docRef, {
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    provider: user.provider,
-    createdAt: user.createdAt,
-    updatedAt: new Date().toISOString(),
-  });
+  try {
+    const docRef = doc(db, "users", user.id, "profile", "info");
+    await setDoc(docRef, {
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      provider: user.provider,
+      createdAt: user.createdAt,
+      updatedAt: new Date().toISOString(),
+    });
+    console.log("User profile saved to Firestore");
+  } catch (error) {
+    console.error("Error saving user profile:", error);
+    throw error;
+  }
 };
 
 export const getUserProfile = async (userId: string): Promise<User | null> => {
   try {
     const docRef = doc(db, "users", userId, "profile", "info");
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       const data = docSnap.data();
+      console.log("User profile loaded from Firestore:", data);
       return {
         id: userId,
         name: data.name,
@@ -198,7 +205,8 @@ export const getUserProfile = async (userId: string): Promise<User | null> => {
         createdAt: data.createdAt,
       } as User;
     }
-    
+
+    console.log("No existing profile found for user:", userId);
     return null;
   } catch (error) {
     console.error("Error loading user profile:", error);

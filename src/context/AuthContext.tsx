@@ -88,21 +88,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
+      console.log("Starting Google sign-in...");
       // Real Google OAuth using Firebase
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
+      console.log("Firebase user authenticated:", firebaseUser.uid);
 
       // Check if user profile exists in Firestore
+      console.log("Checking for existing profile...");
       const existingProfile = await getUserProfile(firebaseUser.uid);
 
       let userData: User;
-      
+
       if (existingProfile) {
         // User exists - use existing profile data
         userData = existingProfile;
         console.log("Existing user logged in:", userData);
       } else {
         // New user - create profile
+        console.log("Creating new user profile...");
         userData = {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
@@ -111,14 +115,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           provider: "google",
           createdAt: new Date().toISOString(),
         };
-        
+
         // Save new profile to Firestore
-        await saveUserProfile(userData);
-        console.log("New user profile created:", userData);
+        try {
+          await saveUserProfile(userData);
+          console.log("New user profile saved successfully");
+        } catch (profileError) {
+          console.warn("Failed to save profile to Firestore, continuing anyway:", profileError);
+          // Don't block login if profile save fails
+        }
       }
 
       setUser(userData);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      console.log("User logged in successfully");
     } catch (error: unknown) {
       console.error("Google sign-in error:", error);
       // Handle specific error cases
@@ -128,7 +138,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else if (firebaseError.code === "auth/popup-blocked") {
         throw new Error("Popup blocked. Please allow popups for this site.");
       } else {
-        throw new Error("Failed to sign in with Google. Please try again.");
+        throw new Error(`Failed to sign in with Google: ${firebaseError.message || "Unknown error"}`);
       }
     } finally {
       setIsLoading(false);
