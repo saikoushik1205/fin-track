@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -15,17 +15,12 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication and get a reference to the service
+// Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
-// Force account selection
-googleProvider.setCustomParameters({
-  prompt: "select_account",
+// ✅ FIXED Firestore initialization
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
 });
-
-// Initialize Firestore
-export const db = getFirestore(app);
-
-// Note: Offline persistence disabled to prevent connection issues
-// Firestore will still cache data automatically in memory
