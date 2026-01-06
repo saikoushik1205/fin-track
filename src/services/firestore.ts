@@ -1,11 +1,10 @@
 import {
-  getFirestore,
   doc,
   setDoc,
   getDoc,
   Timestamp,
 } from "firebase/firestore";
-import { auth } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import type {
   Transaction,
   Expense,
@@ -14,8 +13,6 @@ import type {
   OtherBalance,
 } from "../types";
 import type { User } from "../types/auth";
-
-const db = getFirestore();
 
 // Helper to get current user ID
 const getUserId = () => {

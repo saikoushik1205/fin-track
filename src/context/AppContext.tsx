@@ -17,32 +17,22 @@ import type {
 import { AppContext } from "./createAppContext";
 import { useAuth } from "../hooks/useAuth";
 import {
-  loadTransactions as loadTransactionsFromAPI,
-  createTransaction as createTransactionAPI,
-  updateTransaction as updateTransactionAPI,
-  deleteTransaction as deleteTransactionAPI,
-  loadExpenses as loadExpensesFromAPI,
-  createExpense as createExpenseAPI,
-  updateExpense as updateExpenseAPI,
-  deleteExpense as deleteExpenseAPI,
-  loadInterestTransactions as loadInterestFromAPI,
-  createInterestTransaction as createInterestAPI,
-  updateInterestTransaction as updateInterestAPI,
-  deleteInterestTransaction as deleteInterestAPI,
-  loadEarnings as loadEarningsFromAPI,
-  createEarning as createEarningAPI,
-  updateEarning as updateEarningAPI,
-  deleteEarning as deleteEarningAPI,
-  loadOtherBalances as loadOtherBalancesFromAPI,
-  createOtherBalance as createOtherBalanceAPI,
-  updateOtherBalance as updateOtherBalanceAPI,
-  deleteOtherBalance as deleteOtherBalanceAPI,
-} from "../services/mongodbApi";
+  loadTransactions as loadTransactionsFromFirestore,
+  saveTransactions,
+  loadExpenses as loadExpensesFromFirestore,
+  saveExpenses,
+  loadInterestTransactions as loadInterestFromFirestore,
+  saveInterestTransactions,
+  loadEarnings as loadEarningsFromFirestore,
+  saveEarnings,
+  loadOtherBalances as loadOtherBalancesFromFirestore,
+  saveOtherBalances,
+} from "../services/firestore";
 
-// MongoDB API-based data persistence
+// Firestore-based data persistence
 const loadFromStorage = async (): Promise<Transaction[]> => {
   try {
-    return await loadTransactionsFromAPI();
+    return await loadTransactionsFromFirestore();
   } catch (error) {
     console.error("Error loading transactions:", error);
     return [];
@@ -51,7 +41,7 @@ const loadFromStorage = async (): Promise<Transaction[]> => {
 
 const loadExpensesFromStorage = async (): Promise<Expense[]> => {
   try {
-    return await loadExpensesFromAPI();
+    return await loadExpensesFromFirestore();
   } catch (error) {
     console.error("Error loading expenses:", error);
     return [];
@@ -60,7 +50,7 @@ const loadExpensesFromStorage = async (): Promise<Expense[]> => {
 
 const loadInterestFromStorage = async (): Promise<InterestTransaction[]> => {
   try {
-    return await loadInterestFromAPI();
+    return await loadInterestFromFirestore();
   } catch (error) {
     console.error("Error loading interest:", error);
     return [];
@@ -69,7 +59,7 @@ const loadInterestFromStorage = async (): Promise<InterestTransaction[]> => {
 
 const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
   try {
-    return await loadEarningsFromAPI();
+    return await loadEarningsFromFirestore();
   } catch (error) {
     console.error("Error loading earnings:", error);
     return [];
@@ -78,7 +68,7 @@ const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
 
 const loadOtherBalancesFromStorage = async (): Promise<OtherBalance[]> => {
   try {
-    return await loadOtherBalancesFromAPI();
+    return await loadOtherBalancesFromFirestore();
   } catch (error) {
     console.error("Error loading other balances:", error);
     return [];
@@ -180,9 +170,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log("💾 Creating transaction via API");
-      const newTransaction = await createTransactionAPI(transaction);
-      setTransactions([...transactions, newTransaction]);
+      console.log("💾 Creating transaction via Firestore");
+      const newTransaction = {
+        ...transaction,
+        id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+      const updatedTransactions = [...transactions, newTransaction];
+      await saveTransactions(updatedTransactions);
+      setTransactions(updatedTransactions);
       console.log("✅ Transaction created successfully");
     } catch (error) {
       console.error("❌ Error creating transaction:", error);
@@ -199,11 +194,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🔄 Updating transaction ${id} via API`);
-      const updatedTransaction = await updateTransactionAPI(id, updates);
-      setTransactions(
-        transactions.map((t) => (t.id === id ? updatedTransaction : t))
+      console.log(`🔄 Updating transaction ${id} via Firestore`);
+      const updatedTransactions = transactions.map((t) => 
+        t.id === id ? { ...t, ...updates } : t
       );
+      await saveTransactions(updatedTransactions);
+      setTransactions(updatedTransactions);
       console.log("✅ Transaction updated successfully");
     } catch (error) {
       console.error("❌ Error updating transaction:", error);
@@ -217,9 +213,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🗑️ Deleting transaction ${id} via API`);
-      await deleteTransactionAPI(id);
-      setTransactions(transactions.filter((t) => t.id !== id));
+      console.log(`🗑️ Deleting transaction ${id} via Firestore`);
+      const updatedTransactions = transactions.filter((t) => t.id !== id);
+      await saveTransactions(updatedTransactions);
+      setTransactions(updatedTransactions);
       console.log("✅ Transaction deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting transaction:", error);
@@ -339,9 +336,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log("💸 Creating expense via API");
-      const newExpense = await createExpenseAPI(expense);
-      setExpenses([...expenses, newExpense]);
+      console.log("💸 Creating expense via Firestore");
+      const newExpense = {
+        ...expense,
+        id: `exp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+      const updatedExpenses = [...expenses, newExpense];
+      await saveExpenses(updatedExpenses);
+      setExpenses(updatedExpenses);
       console.log("✅ Expense created successfully");
     } catch (error) {
       console.error("❌ Error creating expense:", error);
@@ -355,9 +357,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🔄 Updating expense ${id} via API`);
-      const updatedExpense = await updateExpenseAPI(id, updates);
-      setExpenses(expenses.map((e) => (e.id === id ? updatedExpense : e)));
+      console.log(`🔄 Updating expense ${id} via Firestore`);
+      const updatedExpenses = expenses.map((e) => 
+        e.id === id ? { ...e, ...updates } : e
+      );
+      await saveExpenses(updatedExpenses);
+      setExpenses(updatedExpenses);
       console.log("✅ Expense updated successfully");
     } catch (error) {
       console.error("❌ Error updating expense:", error);
@@ -371,9 +376,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🗑️ Deleting expense ${id} via API`);
-      await deleteExpenseAPI(id);
-      setExpenses(expenses.filter((e) => e.id !== id));
+      console.log(`🗑️ Deleting expense ${id} via Firestore`);
+      const updatedExpenses = expenses.filter((e) => e.id !== id);
+      await saveExpenses(updatedExpenses);
+      setExpenses(updatedExpenses);
       console.log("✅ Expense deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting expense:", error);
@@ -422,9 +428,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log("💰 Creating interest transaction via API");
-      const newTransaction = await createInterestAPI(transaction);
-      setInterestTransactions([...interestTransactions, newTransaction]);
+      console.log("💰 Creating interest transaction via Firestore");
+      const newTransaction = {
+        ...transaction,
+        id: `int_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+      const updatedInterestTransactions = [...interestTransactions, newTransaction];
+      await saveInterestTransactions(updatedInterestTransactions);
+      setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction created successfully");
     } catch (error) {
       console.error("❌ Error creating interest transaction:", error);
@@ -441,11 +452,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🔄 Updating interest transaction ${id} via API`);
-      const updatedTransaction = await updateInterestAPI(id, updates);
-      setInterestTransactions(
-        interestTransactions.map((t) => (t.id === id ? updatedTransaction : t))
+      console.log(`🔄 Updating interest transaction ${id} via Firestore`);
+      const updatedInterestTransactions = interestTransactions.map((t) => 
+        t.id === id ? { ...t, ...updates } : t
       );
+      await saveInterestTransactions(updatedInterestTransactions);
+      setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction updated successfully");
     } catch (error) {
       console.error("❌ Error updating interest transaction:", error);
@@ -459,9 +471,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🗑️ Deleting interest transaction ${id} via API`);
-      await deleteInterestAPI(id);
-      setInterestTransactions(interestTransactions.filter((t) => t.id !== id));
+      console.log(`🗑️ Deleting interest transaction ${id} via Firestore`);
+      const updatedInterestTransactions = interestTransactions.filter((t) => t.id !== id);
+      await saveInterestTransactions(updatedInterestTransactions);
+      setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting interest transaction:", error);
@@ -494,9 +507,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log("💵 Creating personal earning via API");
-      const newEarning = await createEarningAPI(earning);
-      setPersonalEarnings([...personalEarnings, newEarning]);
+      console.log("💵 Creating personal earning via Firestore");
+      const newEarning = {
+        ...earning,
+        id: `earn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+      const updatedEarnings = [...personalEarnings, newEarning];
+      await saveEarnings(updatedEarnings);
+      setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning created successfully");
     } catch (error) {
       console.error("❌ Error creating personal earning:", error);
@@ -513,11 +531,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🔄 Updating personal earning ${id} via API`);
-      const updatedEarning = await updateEarningAPI(id, updates);
-      setPersonalEarnings(
-        personalEarnings.map((e) => (e.id === id ? updatedEarning : e))
+      console.log(`🔄 Updating personal earning ${id} via Firestore`);
+      const updatedEarnings = personalEarnings.map((e) => 
+        e.id === id ? { ...e, ...updates } : e
       );
+      await saveEarnings(updatedEarnings);
+      setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning updated successfully");
     } catch (error) {
       console.error("❌ Error updating personal earning:", error);
@@ -531,9 +550,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🗑️ Deleting personal earning ${id} via API`);
-      await deleteEarningAPI(id);
-      setPersonalEarnings(personalEarnings.filter((e) => e.id !== id));
+      console.log(`🗑️ Deleting personal earning ${id} via Firestore`);
+      const updatedEarnings = personalEarnings.filter((e) => e.id !== id);
+      await saveEarnings(updatedEarnings);
+      setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting personal earning:", error);
@@ -574,7 +594,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log("🏦 Creating other balance via API");
+      console.log("🏦 Creating other balance via Firestore");
       const initialTransaction: OtherTransaction = {
         id: Date.now().toString(),
         type: "credit",
@@ -582,12 +602,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         amount: balance.amount,
         date: new Date(),
       };
-      const newBalance = await createOtherBalanceAPI({
+      const newBalance = {
         ...balance,
+        id: `bal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         updatedAt: new Date(),
         transactions: [initialTransaction],
-      } as OtherBalance);
-      setOtherBalances([...otherBalances, newBalance]);
+      } as OtherBalance;
+      const updatedBalances = [...otherBalances, newBalance];
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other balance created successfully");
     } catch (error) {
       console.error("❌ Error creating other balance:", error);
@@ -604,14 +627,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🔄 Updating other balance ${id} via API`);
-      const updatedBalance = await updateOtherBalanceAPI(id, {
-        ...updates,
-        updatedAt: new Date(),
-      } as Partial<OtherBalance>);
-      setOtherBalances(
-        otherBalances.map((b) => (b.id === id ? updatedBalance : b))
+      console.log(`🔄 Updating other balance ${id} via Firestore`);
+      const updatedBalances = otherBalances.map((b) => 
+        b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
       );
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other balance updated successfully");
     } catch (error) {
       console.error("❌ Error updating other balance:", error);
@@ -625,9 +646,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      console.log(`🗑️ Deleting other balance ${id} via API`);
-      await deleteOtherBalanceAPI(id);
-      setOtherBalances(otherBalances.filter((b) => b.id !== id));
+      console.log(`🗑️ Deleting other balance ${id} via Firestore`);
+      const updatedBalances = otherBalances.filter((b) => b.id !== id);
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other balance deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting other balance:", error);
@@ -658,14 +680,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return t.type === "credit" ? sum + t.amount : sum - t.amount;
       }, 0);
 
-      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
-        transactions: updatedTransactions,
-        amount: newAmount,
-        updatedAt: new Date(),
-      });
-      setOtherBalances(
-        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      const updatedBalances = otherBalances.map((b) =>
+        b.id === balanceId
+          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          : b
       );
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other transaction added successfully");
     } catch (error) {
       console.error("❌ Error adding other transaction:", error);
@@ -696,14 +717,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return t.type === "credit" ? sum + t.amount : sum - t.amount;
       }, 0);
 
-      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
-        transactions: updatedTransactions,
-        amount: newAmount,
-        updatedAt: new Date(),
-      });
-      setOtherBalances(
-        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      const updatedBalances = otherBalances.map((b) =>
+        b.id === balanceId
+          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          : b
       );
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other transaction updated successfully");
     } catch (error) {
       console.error("❌ Error updating other transaction:", error);
@@ -733,14 +753,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return t.type === "credit" ? sum + t.amount : sum - t.amount;
       }, 0);
 
-      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
-        transactions: updatedTransactions,
-        amount: newAmount,
-        updatedAt: new Date(),
-      });
-      setOtherBalances(
-        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      const updatedBalances = otherBalances.map((b) =>
+        b.id === balanceId
+          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          : b
       );
+      await saveOtherBalances(updatedBalances);
+      setOtherBalances(updatedBalances);
       console.log("✅ Other transaction deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting other transaction:", error);

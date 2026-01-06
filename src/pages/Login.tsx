@@ -113,6 +113,7 @@ export const Login = () => {
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })

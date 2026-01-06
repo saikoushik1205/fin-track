@@ -161,6 +161,7 @@ export const Register = () => {
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
@@ -180,6 +181,7 @@ export const Register = () => {
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={(e) =>
                     setFormData({
