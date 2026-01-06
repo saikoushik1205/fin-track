@@ -6,9 +6,11 @@ export interface IExpense extends Document {
   amount: number;
   date: Date;
   description?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const ExpenseSchema = new Schema<IExpense>(
+const ExpenseSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     category: { type: String, required: true },

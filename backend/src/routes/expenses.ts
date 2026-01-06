@@ -1,23 +1,22 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import Expense from "../models/Expense";
-import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", verifyToken, async (req: AuthRequest, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const expenses = await Expense.find({ userId: req.userId }).sort({
-      date: -1,
-    });
+    const userId = (req as any).userId;
+    const expenses = await Expense.find({ userId }).sort({ date: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch expenses" });
   }
 });
 
-router.post("/", verifyToken, async (req: AuthRequest, res) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
-    const expense = new Expense({ ...req.body, userId: req.userId });
+    const userId = (req as any).userId;
+    const expense = new Expense({ ...req.body, userId });
     await expense.save();
     res.status(201).json(expense);
   } catch (error) {
@@ -25,10 +24,11 @@ router.post("/", verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const expense = await Expense.findOneAndUpdate(
-      { _id: req.params.id, userId: req.userId },
+      { _id: req.params.id, userId },
       req.body,
       { new: true }
     );
@@ -39,11 +39,12 @@ router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const expense = await Expense.findOneAndDelete({
       _id: req.params.id,
-      userId: req.userId,
+      userId,
     });
     if (!expense) return res.status(404).json({ error: "Expense not found" });
     res.json({ message: "Expense deleted successfully" });

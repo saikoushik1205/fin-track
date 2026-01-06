@@ -1,54 +1,59 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import OtherBalance from "../models/OtherBalance";
-import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", verifyToken, async (req: AuthRequest, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const balances = await OtherBalance.find({ userId: req.userId }).sort({
+    const userId = (req as any).userId;
+    const balances = await OtherBalance.find({ userId }).sort({
       updatedAt: -1,
     });
     res.json(balances);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch balances" });
+    res.status(500).json({ error: "Failed to fetch other balances" });
   }
 });
 
-router.post("/", verifyToken, async (req: AuthRequest, res) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
-    const balance = new OtherBalance({ ...req.body, userId: req.userId });
+    const userId = (req as any).userId;
+    const balance = new OtherBalance({ ...req.body, userId });
     await balance.save();
     res.status(201).json(balance);
   } catch (error) {
-    res.status(500).json({ error: "Failed to create balance" });
+    res.status(500).json({ error: "Failed to create other balance" });
   }
 });
 
-router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const balance = await OtherBalance.findOneAndUpdate(
-      { _id: req.params.id, userId: req.userId },
-      { ...req.body, updatedAt: new Date() },
+      { _id: req.params.id, userId },
+      req.body,
       { new: true }
     );
-    if (!balance) return res.status(404).json({ error: "Balance not found" });
+    if (!balance)
+      return res.status(404).json({ error: "Other balance not found" });
     res.json(balance);
   } catch (error) {
-    res.status(500).json({ error: "Failed to update balance" });
+    res.status(500).json({ error: "Failed to update other balance" });
   }
 });
 
-router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const balance = await OtherBalance.findOneAndDelete({
       _id: req.params.id,
-      userId: req.userId,
+      userId,
     });
-    if (!balance) return res.status(404).json({ error: "Balance not found" });
-    res.json({ message: "Balance deleted successfully" });
+    if (!balance)
+      return res.status(404).json({ error: "Other balance not found" });
+    res.json({ message: "Other balance deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to delete balance" });
+    res.status(500).json({ error: "Failed to delete other balance" });
   }
 });
 

@@ -10,9 +10,11 @@ export interface ITransaction extends Document {
   type: "lending" | "borrowing";
   amountReturned?: number;
   parentId?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const TransactionSchema = new Schema<ITransaction>(
+const TransactionSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     personName: { type: String, required: true },

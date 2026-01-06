@@ -1,40 +1,43 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import Transaction from "../models/Transaction";
-import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
 // Get all transactions for user
-router.get("/", verifyToken, async (req: AuthRequest, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const transactions = await Transaction.find({ userId: req.userId }).sort({
-      date: -1,
-    });
+    const userId = (req as any).userId;
+    const transactions = await Transaction.find({ userId }).sort({ date: -1 });
     res.json(transactions);
   } catch (error) {
+    console.error("Error fetching transactions:", error);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
 
 // Create transaction
-router.post("/", verifyToken, async (req: AuthRequest, res) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const transaction = new Transaction({
       ...req.body,
-      userId: req.userId,
+      userId,
     });
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
+    console.error("Error creating transaction:", error);
     res.status(500).json({ error: "Failed to create transaction" });
   }
 });
 
 // Update transaction
-router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
+    const { id } = req.params;
     const transaction = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, userId: req.userId },
+      { _id: id, userId },
       req.body,
       { new: true }
     );
@@ -43,22 +46,23 @@ router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
     }
     res.json(transaction);
   } catch (error) {
+    console.error("Error updating transaction:", error);
     res.status(500).json({ error: "Failed to update transaction" });
   }
 });
 
 // Delete transaction
-router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const transaction = await Transaction.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.userId,
-    });
+    const userId = (req as any).userId;
+    const { id } = req.params;
+    const transaction = await Transaction.findOneAndDelete({ _id: id, userId });
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
     res.json({ message: "Transaction deleted successfully" });
   } catch (error) {
+    console.error("Error deleting transaction:", error);
     res.status(500).json({ error: "Failed to delete transaction" });
   }
 });

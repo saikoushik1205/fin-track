@@ -8,9 +8,11 @@ export interface IInterestTransaction extends Document {
   totalAmount: number;
   date: Date;
   remarks?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const InterestTransactionSchema = new Schema<IInterestTransaction>(
+const InterestTransactionSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     personName: { type: String, required: true },

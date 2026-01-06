@@ -1,26 +1,24 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import InterestTransaction from "../models/InterestTransaction";
-import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", verifyToken, async (req: AuthRequest, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const transactions = await InterestTransaction.find({
-      userId: req.userId,
-    }).sort({ date: -1 });
+    const userId = (req as any).userId;
+    const transactions = await InterestTransaction.find({ userId }).sort({
+      date: -1,
+    });
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch interest transactions" });
   }
 });
 
-router.post("/", verifyToken, async (req: AuthRequest, res) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
-    const transaction = new InterestTransaction({
-      ...req.body,
-      userId: req.userId,
-    });
+    const userId = (req as any).userId;
+    const transaction = new InterestTransaction({ ...req.body, userId });
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
@@ -28,10 +26,11 @@ router.post("/", verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const transaction = await InterestTransaction.findOneAndUpdate(
-      { _id: req.params.id, userId: req.userId },
+      { _id: req.params.id, userId },
       req.body,
       { new: true }
     );
@@ -43,11 +42,12 @@ router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const transaction = await InterestTransaction.findOneAndDelete({
       _id: req.params.id,
-      userId: req.userId,
+      userId,
     });
     if (!transaction)
       return res.status(404).json({ error: "Interest transaction not found" });

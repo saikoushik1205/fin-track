@@ -6,9 +6,11 @@ export interface IPersonalEarning extends Document {
   amount: number;
   date: Date;
   description?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const PersonalEarningSchema = new Schema<IPersonalEarning>(
+const PersonalEarningSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     sourceName: { type: String, required: true },
