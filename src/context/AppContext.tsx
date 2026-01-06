@@ -338,16 +338,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(`💸 Adding expense, current count: ${expenses.length}`);
-    const newExpense: Expense = {
-      ...expense,
-      id: Date.now().toString(),
-    };
-
-    const updated = [...expenses, newExpense];
-    setExpenses(updated);
-    await saveExpensesToStorage(updated);
-    console.log(`✅ Expense added and saved, count: ${updated.length}`);
+    try {
+      console.log("💸 Creating expense via API");
+      const newExpense = await createExpenseAPI(expense);
+      setExpenses([...expenses, newExpense]);
+      console.log("✅ Expense created successfully");
+    } catch (error) {
+      console.error("❌ Error creating expense:", error);
+    }
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
@@ -356,13 +354,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(`🔄 Updating expense ${id}, current count: ${expenses.length}`);
-    const updated = expenses.map((e) =>
-      e.id === id ? { ...e, ...updates } : e
-    );
-    setExpenses(updated);
-    await saveExpensesToStorage(updated);
-    console.log(`✅ Expense updated and saved, count: ${updated.length}`);
+    try {
+      console.log(`🔄 Updating expense ${id} via API`);
+      const updatedExpense = await updateExpenseAPI(id, updates);
+      setExpenses(expenses.map((e) => (e.id === id ? updatedExpense : e)));
+      console.log("✅ Expense updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating expense:", error);
+    }
   };
 
   const deleteExpense = async (id: string) => {
@@ -371,11 +370,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(`🗑️ Deleting expense ${id}, current count: ${expenses.length}`);
-    const updated = expenses.filter((e) => e.id !== id);
-    setExpenses(updated);
-    await saveExpensesToStorage(updated);
-    console.log(`✅ Expense deleted and saved, count: ${updated.length}`);
+    try {
+      console.log(`🗑️ Deleting expense ${id} via API`);
+      await deleteExpenseAPI(id);
+      setExpenses(expenses.filter((e) => e.id !== id));
+      console.log("✅ Expense deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting expense:", error);
+    }
   };
 
   const getExpenseStats = (): ExpenseStats => {
@@ -419,20 +421,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `💰 Adding interest transaction, current count: ${interestTransactions.length}`
-    );
-    const newTransaction: InterestTransaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
-
-    const updated = [...interestTransactions, newTransaction];
-    setInterestTransactions(updated);
-    await saveInterestToStorage(updated);
-    console.log(
-      `✅ Interest transaction added and saved, count: ${updated.length}`
-    );
+    try {
+      console.log("💰 Creating interest transaction via API");
+      const newTransaction = await createInterestAPI(transaction);
+      setInterestTransactions([...interestTransactions, newTransaction]);
+      console.log("✅ Interest transaction created successfully");
+    } catch (error) {
+      console.error("❌ Error creating interest transaction:", error);
+    }
   };
 
   const updateInterestTransaction = async (
@@ -444,27 +440,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🔄 Updating interest transaction ${id}, current count: ${interestTransactions.length}`
-    );
-    const updated = interestTransactions.map((t) => {
-      if (t.id === id) {
-        const result = { ...t, ...updates };
-        if (updates.principal !== undefined || updates.interest !== undefined) {
-          result.totalAmount =
-            (updates.principal ?? t.principal) +
-            (updates.interest ?? t.interest);
-        }
-        return result;
-      }
-      return t;
-    });
-
-    setInterestTransactions(updated);
-    await saveInterestToStorage(updated);
-    console.log(
-      `✅ Interest transaction updated and saved, count: ${updated.length}`
-    );
+    try {
+      console.log(`🔄 Updating interest transaction ${id} via API`);
+      const updatedTransaction = await updateInterestAPI(id, updates);
+      setInterestTransactions(
+        interestTransactions.map((t) => (t.id === id ? updatedTransaction : t))
+      );
+      console.log("✅ Interest transaction updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating interest transaction:", error);
+    }
   };
 
   const deleteInterestTransaction = async (id: string) => {
@@ -473,15 +458,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🗑️ Deleting interest transaction ${id}, current count: ${interestTransactions.length}`
-    );
-    const updated = interestTransactions.filter((t) => t.id !== id);
-    setInterestTransactions(updated);
-    await saveInterestToStorage(updated);
-    console.log(
-      `✅ Interest transaction deleted and saved, count: ${updated.length}`
-    );
+    try {
+      console.log(`🗑️ Deleting interest transaction ${id} via API`);
+      await deleteInterestAPI(id);
+      setInterestTransactions(interestTransactions.filter((t) => t.id !== id));
+      console.log("✅ Interest transaction deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting interest transaction:", error);
+    }
   };
 
   const getInterestStats = (): InterestStats => {
@@ -509,20 +493,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `💵 Adding personal earning, current count: ${personalEarnings.length}`
-    );
-    const newEarning: PersonalEarning = {
-      ...earning,
-      id: Date.now().toString(),
-    };
-
-    const updated = [...personalEarnings, newEarning];
-    setPersonalEarnings(updated);
-    await saveEarningsToStorage(updated);
-    console.log(
-      `✅ Personal earning added and saved, count: ${updated.length}`
-    );
+    try {
+      console.log("💵 Creating personal earning via API");
+      const newEarning = await createEarningAPI(earning);
+      setPersonalEarnings([...personalEarnings, newEarning]);
+      console.log("✅ Personal earning created successfully");
+    } catch (error) {
+      console.error("❌ Error creating personal earning:", error);
+    }
   };
 
   const updatePersonalEarning = async (
@@ -534,17 +512,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🔄 Updating personal earning ${id}, current count: ${personalEarnings.length}`
-    );
-    const updated = personalEarnings.map((e) =>
-      e.id === id ? { ...e, ...updates } : e
-    );
-    setPersonalEarnings(updated);
-    await saveEarningsToStorage(updated);
-    console.log(
-      `✅ Personal earning updated and saved, count: ${updated.length}`
-    );
+    try {
+      console.log(`🔄 Updating personal earning ${id} via API`);
+      const updatedEarning = await updateEarningAPI(id, updates);
+      setPersonalEarnings(
+        personalEarnings.map((e) => (e.id === id ? updatedEarning : e))
+      );
+      console.log("✅ Personal earning updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating personal earning:", error);
+    }
   };
 
   const deletePersonalEarning = async (id: string) => {
@@ -553,15 +530,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🗑️ Deleting personal earning ${id}, current count: ${personalEarnings.length}`
-    );
-    const updated = personalEarnings.filter((e) => e.id !== id);
-    setPersonalEarnings(updated);
-    await saveEarningsToStorage(updated);
-    console.log(
-      `✅ Personal earning deleted and saved, count: ${updated.length}`
-    );
+    try {
+      console.log(`🗑️ Deleting personal earning ${id} via API`);
+      await deleteEarningAPI(id);
+      setPersonalEarnings(personalEarnings.filter((e) => e.id !== id));
+      console.log("✅ Personal earning deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting personal earning:", error);
+    }
   };
 
   const getPersonalEarningsStats = (): PersonalEarningsStats => {
@@ -597,28 +573,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🏦 Adding other balance, current count: ${otherBalances.length}`
-    );
-    // Create an initial transaction for the opening balance
-    const initialTransaction: OtherTransaction = {
-      id: Date.now().toString(),
-      type: "credit",
-      note: "Opening Balance",
-      amount: balance.amount,
-      date: new Date(),
-    };
-
-    const newBalance: OtherBalance = {
-      ...balance,
-      id: (Date.now() + 1).toString(),
-      updatedAt: new Date(),
-      transactions: [initialTransaction],
-    };
-    const updated = [...otherBalances, newBalance];
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(`✅ Other balance added and saved, count: ${updated.length}`);
+    try {
+      console.log("🏦 Creating other balance via API");
+      const initialTransaction: OtherTransaction = {
+        id: Date.now().toString(),
+        type: "credit",
+        note: "Opening Balance",
+        amount: balance.amount,
+        date: new Date(),
+      };
+      const newBalance = await createOtherBalanceAPI({
+        ...balance,
+        updatedAt: new Date(),
+        transactions: [initialTransaction],
+      } as OtherBalance);
+      setOtherBalances([...otherBalances, newBalance]);
+      console.log("✅ Other balance created successfully");
+    } catch (error) {
+      console.error("❌ Error creating other balance:", error);
+    }
   };
 
   const updateOtherBalance = async (
@@ -630,15 +603,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🔄 Updating other balance ${id}, current count: ${otherBalances.length}`
-    );
-    const updated = otherBalances.map((b) =>
-      b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
-    );
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(`✅ Other balance updated and saved, count: ${updated.length}`);
+    try {
+      console.log(`🔄 Updating other balance ${id} via API`);
+      const updatedBalance = await updateOtherBalanceAPI(id, {
+        ...updates,
+        updatedAt: new Date(),
+      } as Partial<OtherBalance>);
+      setOtherBalances(
+        otherBalances.map((b) => (b.id === id ? updatedBalance : b))
+      );
+      console.log("✅ Other balance updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating other balance:", error);
+    }
   };
 
   const deleteOtherBalance = async (id: string) => {
@@ -647,13 +624,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🗑️ Deleting other balance ${id}, current count: ${otherBalances.length}`
-    );
-    const updated = otherBalances.filter((b) => b.id !== id);
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(`✅ Other balance deleted and saved, count: ${updated.length}`);
+    try {
+      console.log(`🗑️ Deleting other balance ${id} via API`);
+      await deleteOtherBalanceAPI(id);
+      setOtherBalances(otherBalances.filter((b) => b.id !== id));
+      console.log("✅ Other balance deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting other balance:", error);
+    }
   };
 
   // Other Transaction Functions
@@ -666,33 +644,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(`💳 Adding other transaction to balance ${balanceId}`);
-    const newTransaction: OtherTransaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
+    try {
+      console.log(`💳 Adding other transaction to balance ${balanceId}`);
+      const balance = otherBalances.find((b) => b.id === balanceId);
+      if (!balance) return;
 
-    const updated = otherBalances.map((balance) => {
-      if (balance.id === balanceId) {
-        const updatedTransactions = [...balance.transactions, newTransaction];
-        // Recalculate balance amount based on transactions
-        const newAmount = updatedTransactions.reduce((sum, t) => {
-          return t.type === "credit" ? sum + t.amount : sum - t.amount;
-        }, 0);
+      const newTransaction: OtherTransaction = {
+        ...transaction,
+        id: Date.now().toString(),
+      };
+      const updatedTransactions = [...balance.transactions, newTransaction];
+      const newAmount = updatedTransactions.reduce((sum, t) => {
+        return t.type === "credit" ? sum + t.amount : sum - t.amount;
+      }, 0);
 
-        return {
-          ...balance,
-          transactions: updatedTransactions,
-          amount: newAmount,
-          updatedAt: new Date(),
-        };
-      }
-      return balance;
-    });
-
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(`✅ Other transaction added and saved to balance ${balanceId}`);
+      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
+        transactions: updatedTransactions,
+        amount: newAmount,
+        updatedAt: new Date(),
+      });
+      setOtherBalances(
+        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      );
+      console.log("✅ Other transaction added successfully");
+    } catch (error) {
+      console.error("❌ Error adding other transaction:", error);
+    }
   };
 
   const updateOtherTransaction = async (
@@ -701,40 +678,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<OtherTransaction>
   ) => {
     if (!user) {
-      console.warn(
-        "\u26a0\ufe0f Cannot update other transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot update other transaction: user not ready");
       return;
     }
 
-    console.log(
-      `\ud83d\udd04 Updating other transaction ${transactionId} in balance ${balanceId}`
-    );
-    const updated = otherBalances.map((balance) => {
-      if (balance.id === balanceId) {
-        const updatedTransactions = balance.transactions.map((t) =>
-          t.id === transactionId ? { ...t, ...updates } : t
-        );
-        // Recalculate balance amount
-        const newAmount = updatedTransactions.reduce((sum, t) => {
-          return t.type === "credit" ? sum + t.amount : sum - t.amount;
-        }, 0);
+    try {
+      console.log(
+        `🔄 Updating other transaction ${transactionId} in balance ${balanceId}`
+      );
+      const balance = otherBalances.find((b) => b.id === balanceId);
+      if (!balance) return;
 
-        return {
-          ...balance,
-          transactions: updatedTransactions,
-          amount: newAmount,
-          updatedAt: new Date(),
-        };
-      }
-      return balance;
-    });
+      const updatedTransactions = balance.transactions.map((t) =>
+        t.id === transactionId ? { ...t, ...updates } : t
+      );
+      const newAmount = updatedTransactions.reduce((sum, t) => {
+        return t.type === "credit" ? sum + t.amount : sum - t.amount;
+      }, 0);
 
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(
-      `\u2705 Other transaction updated and saved in balance ${balanceId}`
-    );
+      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
+        transactions: updatedTransactions,
+        amount: newAmount,
+        updatedAt: new Date(),
+      });
+      setOtherBalances(
+        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      );
+      console.log("✅ Other transaction updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating other transaction:", error);
+    }
   };
 
   const deleteOtherTransaction = async (
@@ -742,40 +715,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transactionId: string
   ) => {
     if (!user) {
-      console.warn(
-        "\u26a0\ufe0f Cannot delete other transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot delete other transaction: user not ready");
       return;
     }
 
-    console.log(
-      `\ud83d\uddd1\ufe0f Deleting other transaction ${transactionId} from balance ${balanceId}`
-    );
-    const updated = otherBalances.map((balance) => {
-      if (balance.id === balanceId) {
-        const updatedTransactions = balance.transactions.filter(
-          (t) => t.id !== transactionId
-        );
-        // Recalculate balance amount
-        const newAmount = updatedTransactions.reduce((sum, t) => {
-          return t.type === "credit" ? sum + t.amount : sum - t.amount;
-        }, 0);
+    try {
+      console.log(
+        `🗑️ Deleting other transaction ${transactionId} from balance ${balanceId}`
+      );
+      const balance = otherBalances.find((b) => b.id === balanceId);
+      if (!balance) return;
 
-        return {
-          ...balance,
-          transactions: updatedTransactions,
-          amount: newAmount,
-          updatedAt: new Date(),
-        };
-      }
-      return balance;
-    });
+      const updatedTransactions = balance.transactions.filter(
+        (t) => t.id !== transactionId
+      );
+      const newAmount = updatedTransactions.reduce((sum, t) => {
+        return t.type === "credit" ? sum + t.amount : sum - t.amount;
+      }, 0);
 
-    setOtherBalances(updated);
-    await saveOtherBalancesToStorage(updated);
-    console.log(
-      `\u2705 Other transaction deleted and saved from balance ${balanceId}`
-    );
+      const updatedBalance = await updateOtherBalanceAPI(balanceId, {
+        transactions: updatedTransactions,
+        amount: newAmount,
+        updatedAt: new Date(),
+      });
+      setOtherBalances(
+        otherBalances.map((b) => (b.id === balanceId ? updatedBalance : b))
+      );
+      console.log("✅ Other transaction deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting other transaction:", error);
+    }
   };
 
   return (

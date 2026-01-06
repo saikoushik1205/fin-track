@@ -36,11 +36,6 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 };
 
 // Transactions
-export const saveTransactions = async (transactions: Transaction[]) => {
-  // Not used - individual CRUD operations used instead
-  console.warn("Batch save not supported, use individual create/update/delete");
-};
-
 export const loadTransactions = async (): Promise<Transaction[]> => {
   try {
     const data = await apiCall("/transactions");
@@ -91,10 +86,6 @@ export const deleteTransaction = async (id: string): Promise<void> => {
 };
 
 // Expenses
-export const saveExpenses = async (expenses: Expense[]) => {
-  console.warn("Batch save not supported, use individual create/update/delete");
-};
-
 export const loadExpenses = async (): Promise<Expense[]> => {
   try {
     const data = await apiCall("/expenses");
@@ -145,11 +136,6 @@ export const deleteExpense = async (id: string): Promise<void> => {
 };
 
 // Interest Transactions
-export const saveInterestTransactions = async (
-  transactions: InterestTransaction[]
-) => {
-  console.warn("Batch save not supported, use individual create/update/delete");
-};
 
 export const loadInterestTransactions = async (): Promise<
   InterestTransaction[]
@@ -203,10 +189,6 @@ export const deleteInterestTransaction = async (id: string): Promise<void> => {
 };
 
 // Personal Earnings
-export const saveEarnings = async (earnings: PersonalEarning[]) => {
-  console.warn("Batch save not supported, use individual create/update/delete");
-};
-
 export const loadEarnings = async (): Promise<PersonalEarning[]> => {
   try {
     const data = await apiCall("/earnings");
@@ -257,10 +239,6 @@ export const deleteEarning = async (id: string): Promise<void> => {
 };
 
 // Other Balances
-export const saveOtherBalances = async (balances: OtherBalance[]) => {
-  console.warn("Batch save not supported, use individual create/update/delete");
-};
-
 export const loadOtherBalances = async (): Promise<OtherBalance[]> => {
   try {
     const data = await apiCall("/other-balances");
@@ -323,12 +301,12 @@ export const deleteOtherBalance = async (id: string): Promise<void> => {
 };
 
 // User Profile (keeping for compatibility, but not needed with MongoDB)
-export const saveUserProfile = async (profile: any) => {
+export const saveUserProfile = async (_profile: any) => {
   // Not needed - user info comes from Firebase Auth
   console.log("Profile saved to localStorage only");
 };
 
-export const getUserProfile = async (userId: string) => {
+export const getUserProfile = async (_userId: string) => {
   // Not needed - user info comes from Firebase Auth
   return null;
 };
