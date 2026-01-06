@@ -24,11 +24,19 @@ const getUserId = () => {
   return user.uid;
 };
 
-// Helper to remove undefined values (Firestore doesn't support undefined)
+// Helper to remove undefined values and convert Dates to Timestamps
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const removeUndefined = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map((item) => removeUndefined(item));
+  }
+  if (obj instanceof Date) {
+    // Convert Date to Firestore Timestamp
+    if (isNaN(obj.getTime())) {
+      // Invalid date - use current time
+      return Timestamp.now();
+    }
+    return Timestamp.fromDate(obj);
   }
   if (obj !== null && typeof obj === "object") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
