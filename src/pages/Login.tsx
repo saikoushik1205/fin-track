@@ -2,11 +2,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Mail, Lock, Chrome, TrendingUp } from "lucide-react";
+import { Mail, Lock, TrendingUp } from "lucide-react";
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,22 +24,6 @@ export const Login = () => {
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to login");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await loginWithGoogle();
-      navigate("/");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to login with Google"
-      );
     } finally {
       setIsLoading(false);
     }
@@ -132,24 +116,6 @@ export const Login = () => {
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-
-          <div className="mt-8">
-            <div className="w-full border-t border-dark-700"></div>
-            <p className="text-center text-sm text-dark-400 mt-4">
-              Or continue with
-            </p>
-
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="mt-6 w-full flex items-center justify-center space-x-3 glass-card hover:bg-dark-700/50 py-3 px-4 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Chrome className="w-5 h-5 text-primary-400" />
-              <span className="text-dark-100 font-semibold">
-                Sign in with Google
-              </span>
-            </button>
-          </div>
 
           <p className="mt-6 text-center text-sm text-dark-400">
             Don't have an account?{" "}

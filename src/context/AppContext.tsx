@@ -17,63 +17,17 @@ import type {
 import { AppContext } from "./createAppContext";
 import { useAuth } from "../hooks/useAuth";
 import {
-  loadTransactions as loadTransactionsFromFirestore,
+  loadTransactions,
   saveTransactions,
-  loadExpenses as loadExpensesFromFirestore,
+  loadExpenses,
   saveExpenses,
-  loadInterestTransactions as loadInterestFromFirestore,
+  loadInterestTransactions,
   saveInterestTransactions,
-  loadEarnings as loadEarningsFromFirestore,
+  loadEarnings,
   saveEarnings,
-  loadOtherBalances as loadOtherBalancesFromFirestore,
+  loadOtherBalances,
   saveOtherBalances,
-} from "../services/firestore";
-
-// Firestore-based data persistence
-const loadFromStorage = async (): Promise<Transaction[]> => {
-  try {
-    return await loadTransactionsFromFirestore();
-  } catch (error) {
-    console.error("Error loading transactions:", error);
-    return [];
-  }
-};
-
-const loadExpensesFromStorage = async (): Promise<Expense[]> => {
-  try {
-    return await loadExpensesFromFirestore();
-  } catch (error) {
-    console.error("Error loading expenses:", error);
-    return [];
-  }
-};
-
-const loadInterestFromStorage = async (): Promise<InterestTransaction[]> => {
-  try {
-    return await loadInterestFromFirestore();
-  } catch (error) {
-    console.error("Error loading interest:", error);
-    return [];
-  }
-};
-
-const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
-  try {
-    return await loadEarningsFromFirestore();
-  } catch (error) {
-    console.error("Error loading earnings:", error);
-    return [];
-  }
-};
-
-const loadOtherBalancesFromStorage = async (): Promise<OtherBalance[]> => {
-  try {
-    return await loadOtherBalancesFromFirestore();
-  } catch (error) {
-    console.error("Error loading other balances:", error);
-    return [];
-  }
-};
+} from "../services/localStorage";
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -101,7 +55,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       initializedUserRef.current = user.id;
       // Data loading will set isDataLoaded to true after completion
 
-      // Load data from Firestore
+      // Load data from localStorage
       const loadData = async () => {
         try {
           console.log("📥 Loading data for user:", user.id);
@@ -112,11 +66,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             loadedEarnings,
             loadedOtherBalances,
           ] = await Promise.all([
-            loadFromStorage(),
-            loadExpensesFromStorage(),
-            loadInterestFromStorage(),
-            loadEarningsFromStorage(),
-            loadOtherBalancesFromStorage(),
+            Promise.resolve(loadTransactions(user.id)),
+            Promise.resolve(loadExpenses(user.id)),
+            Promise.resolve(loadInterestTransactions(user.id)),
+            Promise.resolve(loadEarnings(user.id)),
+            Promise.resolve(loadOtherBalances(user.id)),
           ]);
 
           console.log("✅ Data loaded:", {
@@ -136,7 +90,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             setIsDataLoaded(true);
           });
         } catch (error) {
-          console.error("❌ Error loading data from Firestore:", error);
+          console.error("❌ Error loading data from localStorage:", error);
           setIsDataLoaded(true); // Set loaded even on error to unblock UI
         }
       };
@@ -176,7 +130,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
       const updatedTransactions = [...transactions, newTransaction];
-      await saveTransactions(updatedTransactions);
+      await saveTransactions(user.id, updatedTransactions);
       setTransactions(updatedTransactions);
       console.log("✅ Transaction created successfully");
     } catch (error) {
@@ -195,10 +149,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🔄 Updating transaction ${id} via Firestore`);
-      const updatedTransactions = transactions.map((t) => 
+      const updatedTransactions = transactions.map((t) =>
         t.id === id ? { ...t, ...updates } : t
       );
-      await saveTransactions(updatedTransactions);
+      await saveTransactions(user.id, updatedTransactions);
       setTransactions(updatedTransactions);
       console.log("✅ Transaction updated successfully");
     } catch (error) {
@@ -215,7 +169,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log(`🗑️ Deleting transaction ${id} via Firestore`);
       const updatedTransactions = transactions.filter((t) => t.id !== id);
-      await saveTransactions(updatedTransactions);
+      await saveTransactions(user.id, updatedTransactions);
       setTransactions(updatedTransactions);
       console.log("✅ Transaction deleted successfully");
     } catch (error) {
@@ -342,7 +296,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         id: `exp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
       const updatedExpenses = [...expenses, newExpense];
-      await saveExpenses(updatedExpenses);
+      await saveExpenses(user.id, updatedExpenses);
       setExpenses(updatedExpenses);
       console.log("✅ Expense created successfully");
     } catch (error) {
@@ -358,10 +312,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🔄 Updating expense ${id} via Firestore`);
-      const updatedExpenses = expenses.map((e) => 
+      const updatedExpenses = expenses.map((e) =>
         e.id === id ? { ...e, ...updates } : e
       );
-      await saveExpenses(updatedExpenses);
+      await saveExpenses(user.id, updatedExpenses);
       setExpenses(updatedExpenses);
       console.log("✅ Expense updated successfully");
     } catch (error) {
@@ -378,7 +332,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log(`🗑️ Deleting expense ${id} via Firestore`);
       const updatedExpenses = expenses.filter((e) => e.id !== id);
-      await saveExpenses(updatedExpenses);
+      await saveExpenses(user.id, updatedExpenses);
       setExpenses(updatedExpenses);
       console.log("✅ Expense deleted successfully");
     } catch (error) {
@@ -433,7 +387,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         ...transaction,
         id: `int_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
-      const updatedInterestTransactions = [...interestTransactions, newTransaction];
+      const updatedInterestTransactions = [
+        ...interestTransactions,
+        newTransaction,
+      ];
       await saveInterestTransactions(updatedInterestTransactions);
       setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction created successfully");
@@ -453,10 +410,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🔄 Updating interest transaction ${id} via Firestore`);
-      const updatedInterestTransactions = interestTransactions.map((t) => 
+      const updatedInterestTransactions = interestTransactions.map((t) =>
         t.id === id ? { ...t, ...updates } : t
       );
-      await saveInterestTransactions(updatedInterestTransactions);
+      await saveInterestTransactions(user.id, updatedInterestTransactions);
       setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction updated successfully");
     } catch (error) {
@@ -472,8 +429,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🗑️ Deleting interest transaction ${id} via Firestore`);
-      const updatedInterestTransactions = interestTransactions.filter((t) => t.id !== id);
-      await saveInterestTransactions(updatedInterestTransactions);
+      const updatedInterestTransactions = interestTransactions.filter(
+        (t) => t.id !== id
+      );
+      await saveInterestTransactions(user.id, updatedInterestTransactions);
       setInterestTransactions(updatedInterestTransactions);
       console.log("✅ Interest transaction deleted successfully");
     } catch (error) {
@@ -513,7 +472,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         id: `earn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
       const updatedEarnings = [...personalEarnings, newEarning];
-      await saveEarnings(updatedEarnings);
+      await saveEarnings(user.id, updatedEarnings);
       setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning created successfully");
     } catch (error) {
@@ -532,10 +491,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🔄 Updating personal earning ${id} via Firestore`);
-      const updatedEarnings = personalEarnings.map((e) => 
+      const updatedEarnings = personalEarnings.map((e) =>
         e.id === id ? { ...e, ...updates } : e
       );
-      await saveEarnings(updatedEarnings);
+      await saveEarnings(user.id, updatedEarnings);
       setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning updated successfully");
     } catch (error) {
@@ -552,7 +511,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log(`🗑️ Deleting personal earning ${id} via Firestore`);
       const updatedEarnings = personalEarnings.filter((e) => e.id !== id);
-      await saveEarnings(updatedEarnings);
+      await saveEarnings(user.id, updatedEarnings);
       setPersonalEarnings(updatedEarnings);
       console.log("✅ Personal earning deleted successfully");
     } catch (error) {
@@ -609,7 +568,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         transactions: [initialTransaction],
       } as OtherBalance;
       const updatedBalances = [...otherBalances, newBalance];
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other balance created successfully");
     } catch (error) {
@@ -628,10 +587,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       console.log(`🔄 Updating other balance ${id} via Firestore`);
-      const updatedBalances = otherBalances.map((b) => 
+      const updatedBalances = otherBalances.map((b) =>
         b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
       );
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other balance updated successfully");
     } catch (error) {
@@ -648,7 +607,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log(`🗑️ Deleting other balance ${id} via Firestore`);
       const updatedBalances = otherBalances.filter((b) => b.id !== id);
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other balance deleted successfully");
     } catch (error) {
@@ -682,10 +641,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
       const updatedBalances = otherBalances.map((b) =>
         b.id === balanceId
-          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          ? {
+              ...b,
+              transactions: updatedTransactions,
+              amount: newAmount,
+              updatedAt: new Date(),
+            }
           : b
       );
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other transaction added successfully");
     } catch (error) {
@@ -719,10 +683,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
       const updatedBalances = otherBalances.map((b) =>
         b.id === balanceId
-          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          ? {
+              ...b,
+              transactions: updatedTransactions,
+              amount: newAmount,
+              updatedAt: new Date(),
+            }
           : b
       );
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other transaction updated successfully");
     } catch (error) {
@@ -755,10 +724,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
       const updatedBalances = otherBalances.map((b) =>
         b.id === balanceId
-          ? { ...b, transactions: updatedTransactions, amount: newAmount, updatedAt: new Date() }
+          ? {
+              ...b,
+              transactions: updatedTransactions,
+              amount: newAmount,
+              updatedAt: new Date(),
+            }
           : b
       );
-      await saveOtherBalances(updatedBalances);
+      await saveOtherBalances(user.id, updatedBalances);
       setOtherBalances(updatedBalances);
       console.log("✅ Other transaction deleted successfully");
     } catch (error) {
