@@ -219,9 +219,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       console.warn("⚠️ Cannot add transaction: user not ready");
       return;
     }
-    
+
     if (!isDataLoaded) {
-      console.warn("⚠️ Adding transaction before data fully loaded - proceeding anyway");
+      console.warn(
+        "⚠️ Adding transaction before data fully loaded - proceeding anyway"
+      );
     }
 
     const newTransaction: Transaction = {
@@ -240,9 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Transaction>
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot update transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot update transaction: user not ready");
       return;
     }
 
@@ -259,9 +259,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteTransaction = async (id: string) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot delete transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot delete transaction: user not ready");
       return;
     }
 
@@ -400,9 +398,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot update expense: user not ready"
-      );
+      console.warn("⚠️ Cannot update expense: user not ready");
       return;
     }
 
@@ -417,9 +413,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteExpense = async (id: string) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot delete expense: user not ready"
-      );
+      console.warn("⚠️ Cannot delete expense: user not ready");
       return;
     }
 
@@ -467,9 +461,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transaction: Omit<InterestTransaction, "id">
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot add interest transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot add interest transaction: user not ready");
       return;
     }
 
@@ -494,9 +486,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Omit<InterestTransaction, "id">>
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot update interest transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot update interest transaction: user not ready");
       return;
     }
 
@@ -525,9 +515,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteInterestTransaction = async (id: string) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot delete interest transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot delete interest transaction: user not ready");
       return;
     }
 
@@ -563,9 +551,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Personal earnings management functions
   const addPersonalEarning = async (earning: Omit<PersonalEarning, "id">) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot add personal earning: user not ready"
-      );
+      console.warn("⚠️ Cannot add personal earning: user not ready");
       return;
     }
 
@@ -590,9 +576,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Partial<Omit<PersonalEarning, "id">>
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot update personal earning: user not ready"
-      );
+      console.warn("⚠️ Cannot update personal earning: user not ready");
       return;
     }
 
@@ -611,9 +595,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deletePersonalEarning = async (id: string) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot delete personal earning: user not ready"
-      );
+      console.warn("⚠️ Cannot delete personal earning: user not ready");
       return;
     }
 
@@ -657,9 +639,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     balance: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot add other balance: user not ready"
-      );
+      console.warn("⚠️ Cannot add other balance: user not ready");
       return;
     }
 
@@ -692,9 +672,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updates: Omit<OtherBalance, "id" | "updatedAt" | "transactions">
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot update other balance: user not ready"
-      );
+      console.warn("⚠️ Cannot update other balance: user not ready");
       return;
     }
 
@@ -711,9 +689,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const deleteOtherBalance = async (id: string) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot delete other balance: user not ready"
-      );
+      console.warn("⚠️ Cannot delete other balance: user not ready");
       return;
     }
 
@@ -732,9 +708,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     transaction: Omit<OtherTransaction, "id">
   ) => {
     if (!user) {
-      console.warn(
-        "⚠️ Cannot add other transaction: user not ready"
-      );
+      console.warn("⚠️ Cannot add other transaction: user not ready");
       return;
     }
 
