@@ -17,53 +17,41 @@ import type {
 import { AppContext } from "./createAppContext";
 import { useAuth } from "../hooks/useAuth";
 import {
-  saveTransactions as saveTransactionsToFirestore,
-  loadTransactions as loadTransactionsFromFirestore,
-  saveExpenses as saveExpensesToFirestore,
-  loadExpenses as loadExpensesFromFirestore,
-  saveInterestTransactions as saveInterestToFirestore,
-  loadInterestTransactions as loadInterestFromFirestore,
-  saveEarnings as saveEarningsToFirestore,
-  loadEarnings as loadEarningsFromFirestore,
-  saveOtherBalances as saveOtherBalancesToFirestore,
-  loadOtherBalances as loadOtherBalancesFromFirestore,
-} from "../services/firestore";
+  loadTransactions as loadTransactionsFromAPI,
+  createTransaction as createTransactionAPI,
+  updateTransaction as updateTransactionAPI,
+  deleteTransaction as deleteTransactionAPI,
+  loadExpenses as loadExpensesFromAPI,
+  createExpense as createExpenseAPI,
+  updateExpense as updateExpenseAPI,
+  deleteExpense as deleteExpenseAPI,
+  loadInterestTransactions as loadInterestFromAPI,
+  createInterestTransaction as createInterestAPI,
+  updateInterestTransaction as updateInterestAPI,
+  deleteInterestTransaction as deleteInterestAPI,
+  loadEarnings as loadEarningsFromAPI,
+  createEarning as createEarningAPI,
+  updateEarning as updateEarningAPI,
+  deleteEarning as deleteEarningAPI,
+  loadOtherBalances as loadOtherBalancesFromAPI,
+  createOtherBalance as createOtherBalanceAPI,
+  updateOtherBalance as updateOtherBalanceAPI,
+  deleteOtherBalance as deleteOtherBalanceAPI,
+} from "../services/mongodbApi";
 
-// Firestore-based data persistence
-const saveToStorage = async (transactions: Transaction[]) => {
-  try {
-    console.log("💾 Saving transaction, total:", transactions.length);
-    await saveTransactionsToFirestore(transactions);
-    console.log("✅ Transaction saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving transactions:", error);
-    throw error; // Re-throw to let caller handle
-  }
-};
-
+// MongoDB API-based data persistence
 const loadFromStorage = async (): Promise<Transaction[]> => {
   try {
-    return await loadTransactionsFromFirestore();
+    return await loadTransactionsFromAPI();
   } catch (error) {
     console.error("Error loading transactions:", error);
     return [];
   }
 };
 
-const saveExpensesToStorage = async (expenses: Expense[]) => {
-  try {
-    console.log("💾 Saving expenses, total:", expenses.length);
-    await saveExpensesToFirestore(expenses);
-    console.log("✅ Expenses saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving expenses:", error);
-    throw error;
-  }
-};
-
 const loadExpensesFromStorage = async (): Promise<Expense[]> => {
   try {
-    return await loadExpensesFromFirestore();
+    return await loadExpensesFromAPI();
   } catch (error) {
     console.error("Error loading expenses:", error);
     return [];
@@ -72,63 +60,28 @@ const loadExpensesFromStorage = async (): Promise<Expense[]> => {
 
 const loadInterestFromStorage = async (): Promise<InterestTransaction[]> => {
   try {
-    return await loadInterestFromFirestore();
+    return await loadInterestFromAPI();
   } catch (error) {
     console.error("Error loading interest:", error);
     return [];
   }
 };
 
-const saveInterestToStorage = async (
-  interestTransactions: InterestTransaction[]
-) => {
-  try {
-    console.log("💾 Saving interest, total:", interestTransactions.length);
-    await saveInterestToFirestore(interestTransactions);
-    console.log("✅ Interest saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving interest:", error);
-    throw error;
-  }
-};
-
 const loadEarningsFromStorage = async (): Promise<PersonalEarning[]> => {
   try {
-    return await loadEarningsFromFirestore();
+    return await loadEarningsFromAPI();
   } catch (error) {
     console.error("Error loading earnings:", error);
     return [];
   }
 };
 
-const saveEarningsToStorage = async (earnings: PersonalEarning[]) => {
-  try {
-    console.log("💾 Saving earnings, total:", earnings.length);
-    await saveEarningsToFirestore(earnings);
-    console.log("✅ Earnings saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving earnings:", error);
-    throw error;
-  }
-};
-
 const loadOtherBalancesFromStorage = async (): Promise<OtherBalance[]> => {
   try {
-    return await loadOtherBalancesFromFirestore();
+    return await loadOtherBalancesFromAPI();
   } catch (error) {
     console.error("Error loading other balances:", error);
     return [];
-  }
-};
-
-const saveOtherBalancesToStorage = async (balances: OtherBalance[]) => {
-  try {
-    console.log("💾 Saving other balances, total:", balances.length);
-    await saveOtherBalancesToFirestore(balances);
-    console.log("✅ Other balances saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving other balances:", error);
-    throw error;
   }
 };
 
@@ -226,15 +179,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       );
     }
 
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString(),
-      amountReturned: transaction.amountReturned || 0,
-    };
-
-    const updated = [...transactions, newTransaction];
-    setTransactions(updated);
-    await saveToStorage(updated);
+    try {
+      console.log("💾 Creating transaction via API");
+      const newTransaction = await createTransactionAPI(transaction);
+      setTransactions([...transactions, newTransaction]);
+      console.log("✅ Transaction created successfully");
+    } catch (error) {
+      console.error("❌ Error creating transaction:", error);
+    }
   };
 
   const updateTransaction = async (
@@ -246,15 +198,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🔄 Updating transaction ${id}, current count: ${transactions.length}`
-    );
-    const updated = transactions.map((t) =>
-      t.id === id ? { ...t, ...updates } : t
-    );
-    setTransactions(updated);
-    await saveToStorage(updated);
-    console.log(`✅ Transaction updated and saved, count: ${updated.length}`);
+    try {
+      console.log(`🔄 Updating transaction ${id} via API`);
+      const updatedTransaction = await updateTransactionAPI(id, updates);
+      setTransactions(
+        transactions.map((t) => (t.id === id ? updatedTransaction : t))
+      );
+      console.log("✅ Transaction updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating transaction:", error);
+    }
   };
 
   const deleteTransaction = async (id: string) => {
@@ -263,13 +216,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    console.log(
-      `🗑️ Deleting transaction ${id}, current count: ${transactions.length}`
-    );
-    const updated = transactions.filter((t) => t.id !== id);
-    setTransactions(updated);
-    await saveToStorage(updated);
-    console.log(`✅ Transaction deleted and saved, count: ${updated.length}`);
+    try {
+      console.log(`🗑️ Deleting transaction ${id} via API`);
+      await deleteTransactionAPI(id);
+      setTransactions(transactions.filter((t) => t.id !== id));
+      console.log("✅ Transaction deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting transaction:", error);
+    }
   };
 
   const getDashboardStats = (): DashboardStats => {
