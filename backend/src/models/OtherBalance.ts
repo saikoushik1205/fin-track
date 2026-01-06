@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface IOtherTransaction {
-  id: string;
   type: "credit" | "debit";
   note: string;
   amount: number;
@@ -14,28 +13,27 @@ export interface IOtherBalance extends Document {
   amount: number;
   updatedAt: Date;
   transactions: IOtherTransaction[];
-  createdAt: Date;
 }
 
-const OtherTransactionSchema = new Schema({
-  id: { type: String, required: true },
-  type: { type: String, enum: ["credit", "debit"], required: true },
-  note: { type: String, required: true },
-  amount: { type: Number, required: true },
-  date: { type: Date, required: true },
-});
+const OtherTransactionSchema = new Schema(
+  {
+    type: { type: String, enum: ["credit", "debit"], required: true },
+    note: { type: String, required: true },
+    amount: { type: Number, required: true },
+    date: { type: Date, required: true },
+  },
+  { _id: true }
+);
 
-const OtherBalanceSchema: Schema = new Schema(
+const OtherBalanceSchema = new Schema<IOtherBalance>(
   {
     userId: { type: String, required: true, index: true },
     name: { type: String, required: true },
     amount: { type: Number, required: true },
+    updatedAt: { type: Date, default: Date.now },
     transactions: [OtherTransactionSchema],
-    updatedAt: { type: Date, required: true },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IOtherBalance>(

@@ -6,11 +6,9 @@ export interface IPersonalEarning extends Document {
   amount: number;
   date: Date;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const PersonalEarningSchema: Schema = new Schema(
+const PersonalEarningSchema = new Schema<IPersonalEarning>(
   {
     userId: { type: String, required: true, index: true },
     sourceName: { type: String, required: true },
@@ -18,9 +16,7 @@ const PersonalEarningSchema: Schema = new Schema(
     date: { type: Date, required: true },
     description: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IPersonalEarning>(

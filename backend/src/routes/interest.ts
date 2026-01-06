@@ -1,57 +1,57 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import InterestTransaction from "../models/InterestTransaction";
-import { verifyToken } from "../server";
+import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", verifyToken, async (req: Request, res: Response) => {
+router.get("/", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const interest = await InterestTransaction.find({
-      userId: req.body.userId,
+    const transactions = await InterestTransaction.find({
+      userId: req.userId,
     }).sort({ date: -1 });
-    res.json(interest);
+    res.json(transactions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch interest transactions" });
   }
 });
 
-router.post("/", verifyToken, async (req: Request, res: Response) => {
+router.post("/", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const interest = new InterestTransaction({
+    const transaction = new InterestTransaction({
       ...req.body,
-      userId: req.body.userId,
+      userId: req.userId,
     });
-    await interest.save();
-    res.status(201).json(interest);
+    await transaction.save();
+    res.status(201).json(transaction);
   } catch (error) {
     res.status(500).json({ error: "Failed to create interest transaction" });
   }
 });
 
-router.put("/:id", verifyToken, async (req: Request, res: Response) => {
+router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const interest = await InterestTransaction.findOneAndUpdate(
-      { _id: req.params.id, userId: req.body.userId },
+    const transaction = await InterestTransaction.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
       req.body,
       { new: true }
     );
-    if (!interest)
+    if (!transaction)
       return res.status(404).json({ error: "Interest transaction not found" });
-    res.json(interest);
+    res.json(transaction);
   } catch (error) {
     res.status(500).json({ error: "Failed to update interest transaction" });
   }
 });
 
-router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
+router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const interest = await InterestTransaction.findOneAndDelete({
+    const transaction = await InterestTransaction.findOneAndDelete({
       _id: req.params.id,
-      userId: req.body.userId,
+      userId: req.userId,
     });
-    if (!interest)
+    if (!transaction)
       return res.status(404).json({ error: "Interest transaction not found" });
-    res.json({ message: "Interest transaction deleted" });
+    res.json({ message: "Interest transaction deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete interest transaction" });
   }

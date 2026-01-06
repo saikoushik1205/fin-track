@@ -10,11 +10,9 @@ export interface ITransaction extends Document {
   type: "lending" | "borrowing";
   amountReturned?: number;
   parentId?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const TransactionSchema: Schema = new Schema(
+const TransactionSchema = new Schema<ITransaction>(
   {
     userId: { type: String, required: true, index: true },
     personName: { type: String, required: true },
@@ -30,9 +28,7 @@ const TransactionSchema: Schema = new Schema(
     amountReturned: { type: Number, default: 0 },
     parentId: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<ITransaction>("Transaction", TransactionSchema);

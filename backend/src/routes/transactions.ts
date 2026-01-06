@@ -1,15 +1,15 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import Transaction from "../models/Transaction";
-import { verifyToken } from "../server";
+import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
 // Get all transactions for user
-router.get("/", verifyToken, async (req: Request, res: Response) => {
+router.get("/", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const transactions = await Transaction.find({
-      userId: req.body.userId,
-    }).sort({ date: -1 });
+    const transactions = await Transaction.find({ userId: req.userId }).sort({
+      date: -1,
+    });
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch transactions" });
@@ -17,11 +17,11 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
 });
 
 // Create transaction
-router.post("/", verifyToken, async (req: Request, res: Response) => {
+router.post("/", verifyToken, async (req: AuthRequest, res) => {
   try {
     const transaction = new Transaction({
       ...req.body,
-      userId: req.body.userId,
+      userId: req.userId,
     });
     await transaction.save();
     res.status(201).json(transaction);
@@ -31,10 +31,10 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
 });
 
 // Update transaction
-router.put("/:id", verifyToken, async (req: Request, res: Response) => {
+router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
     const transaction = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, userId: req.body.userId },
+      { _id: req.params.id, userId: req.userId },
       req.body,
       { new: true }
     );
@@ -48,16 +48,16 @@ router.put("/:id", verifyToken, async (req: Request, res: Response) => {
 });
 
 // Delete transaction
-router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
+router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
     const transaction = await Transaction.findOneAndDelete({
       _id: req.params.id,
-      userId: req.body.userId,
+      userId: req.userId,
     });
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
-    res.json({ message: "Transaction deleted" });
+    res.json({ message: "Transaction deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete transaction" });
   }

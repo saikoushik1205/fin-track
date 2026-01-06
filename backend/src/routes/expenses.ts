@@ -1,12 +1,12 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import Expense from "../models/Expense";
-import { verifyToken } from "../server";
+import { verifyToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", verifyToken, async (req: Request, res: Response) => {
+router.get("/", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const expenses = await Expense.find({ userId: req.body.userId }).sort({
+    const expenses = await Expense.find({ userId: req.userId }).sort({
       date: -1,
     });
     res.json(expenses);
@@ -15,9 +15,9 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
   }
 });
 
-router.post("/", verifyToken, async (req: Request, res: Response) => {
+router.post("/", verifyToken, async (req: AuthRequest, res) => {
   try {
-    const expense = new Expense({ ...req.body, userId: req.body.userId });
+    const expense = new Expense({ ...req.body, userId: req.userId });
     await expense.save();
     res.status(201).json(expense);
   } catch (error) {
@@ -25,10 +25,10 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
   }
 });
 
-router.put("/:id", verifyToken, async (req: Request, res: Response) => {
+router.put("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
     const expense = await Expense.findOneAndUpdate(
-      { _id: req.params.id, userId: req.body.userId },
+      { _id: req.params.id, userId: req.userId },
       req.body,
       { new: true }
     );
@@ -39,14 +39,14 @@ router.put("/:id", verifyToken, async (req: Request, res: Response) => {
   }
 });
 
-router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
+router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
   try {
     const expense = await Expense.findOneAndDelete({
       _id: req.params.id,
-      userId: req.body.userId,
+      userId: req.userId,
     });
     if (!expense) return res.status(404).json({ error: "Expense not found" });
-    res.json({ message: "Expense deleted" });
+    res.json({ message: "Expense deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete expense" });
   }

@@ -8,11 +8,9 @@ export interface IInterestTransaction extends Document {
   totalAmount: number;
   date: Date;
   remarks?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const InterestTransactionSchema: Schema = new Schema(
+const InterestTransactionSchema = new Schema<IInterestTransaction>(
   {
     userId: { type: String, required: true, index: true },
     personName: { type: String, required: true },
@@ -22,9 +20,7 @@ const InterestTransactionSchema: Schema = new Schema(
     date: { type: Date, required: true },
     remarks: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IInterestTransaction>(

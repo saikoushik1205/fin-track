@@ -6,11 +6,9 @@ export interface IExpense extends Document {
   amount: number;
   date: Date;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const ExpenseSchema: Schema = new Schema(
+const ExpenseSchema = new Schema<IExpense>(
   {
     userId: { type: String, required: true, index: true },
     category: { type: String, required: true },
@@ -18,9 +16,7 @@ const ExpenseSchema: Schema = new Schema(
     date: { type: Date, required: true },
     description: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model<IExpense>("Expense", ExpenseSchema);
